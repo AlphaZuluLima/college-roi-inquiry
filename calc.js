@@ -50,12 +50,14 @@
   }
 
   function salaryAtYear(start, mid, growth, year) {
-    if (year <= 0) return start;
+    const s = Math.max(1, start);
+    const m = Math.max(1, mid);
+    if (year <= 0) return s;
     if (year <= 10) {
       const t = year / 10;
-      return Math.exp(Math.log(start) * (1 - t) + Math.log(mid) * t);
+      return Math.exp(Math.log(s) * (1 - t) + Math.log(m) * t);
     }
-    return mid * Math.pow(1 + growth, year - 10);
+    return m * Math.pow(1 + growth, year - 10);
   }
 
   function computeROI(opts) {
