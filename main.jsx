@@ -347,4 +347,31 @@ function CompareTable({ a, b }) {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(e) { return { error: e }; }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <div style={{ maxWidth: 640, margin: "80px auto", padding: "0 32px", fontFamily: "Georgia, serif" }}>
+        <div style={{ fontSize: 32, marginBottom: 8 }}>§</div>
+        <h2 style={{ fontWeight: 600, marginBottom: 12 }}>Something went wrong</h2>
+        <p style={{ color: "#5A544A", marginBottom: 20 }}>
+          The calculator hit an unexpected error. Try refreshing the page.
+          If the problem persists, open the browser console for details.
+        </p>
+        <pre style={{ fontSize: 12, color: "#8A8478", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+          {this.state.error.message}
+        </pre>
+        <button onClick={() => this.setState({ error: null })}
+                style={{ marginTop: 20, padding: "10px 20px", cursor: "pointer" }}>
+          Try again
+        </button>
+      </div>
+    );
+  }
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <ErrorBoundary><App /></ErrorBoundary>
+);
