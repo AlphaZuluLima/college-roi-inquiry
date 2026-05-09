@@ -28,7 +28,7 @@
   function annualCost(school, opts) {
     const tuition = opts.residency === "in" ? school.tuition_in : school.tuition_out;
     let rb = school.room_board;
-    if (opts.living === "with-parents") rb = Math.round(rb * 0.30);
+    if (opts.living === "with-parents") rb = opts.livingExpenses ?? 0;
     else if (opts.living === "off-campus") rb = Math.round(rb * 0.85);
     const books = school.books;
     const aid = opts.aid;
@@ -67,7 +67,7 @@
                        : opts.scenario === "pessimistic" ? 0.85
                        : 1.0;
 
-    const yearly = annualCost(school, { residency: opts.residency, living: opts.living, aid: opts.aid });
+    const yearly = annualCost(school, { residency: opts.residency, living: opts.living, aid: opts.aid, livingExpenses: opts.livingExpenses ?? 0 });
     const yearsCount = opts.years;
     const totalSticker = yearly.gross * yearsCount;
     const totalAid = yearly.aid * yearsCount;
@@ -184,8 +184,8 @@
                        : opts.scenario === "pessimistic" ? 0.85
                        : 1.0;
 
-    const ccYearly   = annualCost(cc,   { residency: opts.residencyCC   ?? "in", living: opts.livingCC   ?? "with-parents", aid: opts.aidCC   ?? 0 });
-    const univYearly = annualCost(univ, { residency: opts.residencyUniv ?? "in", living: opts.livingUniv ?? "on-campus",    aid: opts.aidUniv ?? 0 });
+    const ccYearly   = annualCost(cc,   { residency: opts.residencyCC   ?? "in", living: opts.livingCC   ?? "with-parents", aid: opts.aidCC   ?? 0, livingExpenses: opts.livingExpensesCC   ?? 0 });
+    const univYearly = annualCost(univ, { residency: opts.residencyUniv ?? "in", living: opts.livingUniv ?? "on-campus",    aid: opts.aidUniv ?? 0, livingExpenses: opts.livingExpensesUniv ?? 0 });
 
     const ccNetCost   = Math.max(0, ccYearly.net)   * 2;
     const univNetCost = Math.max(0, univYearly.net) * 2;

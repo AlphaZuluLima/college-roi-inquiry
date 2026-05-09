@@ -257,6 +257,10 @@ function InputsPanel({ inputs, setInput, customSchools, customPrograms, addCusto
         <Field label="Living">
           <Segment value={inputs.living} onChange={(v) => setInput("living", v)}
                    options={[["on-campus", "On"], ["off-campus", "Off"], ["with-parents", "Parents"]]} />
+          {inputs.living === "with-parents" && (
+            <NumInput value={inputs.livingExpenses} onChange={(v) => setInput("livingExpenses", v)}
+                      prefix="$" step={100} sublabel="personal expenses / yr" />
+          )}
         </Field>
         <Field label="Family income">
           <IncomeSel value={incomeBracket} onChange={onIncomeBracketChange} />
@@ -291,13 +295,16 @@ function Segment({ value, onChange, options }) {
   );
 }
 
-function NumInput({ value, onChange, prefix, suffix, step = 1, decimals = 0 }) {
+function NumInput({ value, onChange, prefix, suffix, step = 1, decimals = 0, sublabel }) {
   return (
-    <div className="numinp">
-      {prefix && <span className="numinp-pre">{prefix}</span>}
-      <input type="number" value={value} step={step}
-             onChange={(e) => onChange(parseFloat(e.target.value) || 0)} />
-      {suffix && <span className="numinp-suf">{suffix}</span>}
+    <div className="numinp-wrap">
+      {sublabel && <span className="numinp-sublabel">{sublabel}</span>}
+      <div className="numinp">
+        {prefix && <span className="numinp-pre">{prefix}</span>}
+        <input type="number" value={value} step={step}
+               onChange={(e) => onChange(parseFloat(e.target.value) || 0)} />
+        {suffix && <span className="numinp-suf">{suffix}</span>}
+      </div>
     </div>
   );
 }

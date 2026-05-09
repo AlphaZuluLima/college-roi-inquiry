@@ -63,6 +63,10 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
             <Field label="Living">
               <Segment value={inputs.livingCC} onChange={v => setInput("livingCC", v)}
                        options={[["with-parents","Parents"],["off-campus","Off"],["on-campus","On"]]} />
+              {inputs.livingCC === "with-parents" && (
+                <NumInput value={inputs.livingExpensesCC ?? 0} onChange={v => setInput("livingExpensesCC", v)}
+                          prefix="$" step={100} sublabel="personal expenses / yr" />
+              )}
             </Field>
             <Field label="Annual aid">
               <NumInput value={inputs.aidCC} onChange={v => setInput("aidCC", v)} prefix="$" step={500} />
@@ -109,6 +113,10 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
             <Field label="Living">
               <Segment value={inputs.livingUniv} onChange={v => setInput("livingUniv", v)}
                        options={[["on-campus","On"],["off-campus","Off"],["with-parents","Parents"]]} />
+              {inputs.livingUniv === "with-parents" && (
+                <NumInput value={inputs.livingExpensesUniv ?? 0} onChange={v => setInput("livingExpensesUniv", v)}
+                          prefix="$" step={100} sublabel="personal expenses / yr" />
+              )}
             </Field>
             <Field label="Annual aid">
               <NumInput value={inputs.aidUniv} onChange={v => setInput("aidUniv", v)} prefix="$" step={500} />

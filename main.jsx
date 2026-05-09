@@ -21,6 +21,7 @@ function App() {
     residency: "in",
     years: 4,
     living: "on-campus",
+    livingExpenses: 0,
     aid: 0,
     aidTouched: false,
     loanTerm: 10,
@@ -29,7 +30,7 @@ function App() {
   const [compareOn, setCompareOn] = mUseState(false);
   const [inputsB, setInputsB] = mUseState({
     schoolId: "university-of-virginia-main-campus", programId: "computer-science",
-    residency: "in", years: 4, living: "on-campus",
+    residency: "in", years: 4, living: "on-campus", livingExpenses: 0,
     aid: 0, aidTouched: false,
     loanTerm: 10, loanRate: 0.0653,
   });
@@ -38,8 +39,8 @@ function App() {
     const univ = D.SCHOOLS.find(s => s.id === DEFAULT_UNIV);
     return {
       ccId: DEFAULT_CC, univId: DEFAULT_UNIV, programId: "liberal-arts",
-      residencyCC: "in",   livingCC: "with-parents", aidCC:   0,
-      residencyUniv: "in", livingUniv: "on-campus",  aidUniv: 0,
+      residencyCC: "in",   livingCC: "with-parents", livingExpensesCC:   0, aidCC:   0,
+      residencyUniv: "in", livingUniv: "on-campus",  livingExpensesUniv: 0, aidUniv: 0,
       loanTerm: 10, loanRate: 0.0653,
     };
   });
