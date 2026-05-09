@@ -3,19 +3,20 @@ const { useState: mUseState, useEffect: mUseEffect, useMemo: mUseMemo } = React;
 const { fmt$, fmt$Full, fmtPct, computeROI, compute2plus2, fetchUnknownEntity } = window.ROI_CALC;
 const D = window.ROI_DATA;
 
-const DEFAULT_CC   = D.SCHOOLS.find(s => s.type === "Public 2-yr")?.id ?? "nova";
-const DEFAULT_UNIV = "uva";
+const DEFAULT_CC   = D.SCHOOLS.find(s => s.type === "Public 2-yr")?.id ?? "northern-virginia-community-college";
+const DEFAULT_UNIV = "university-of-virginia-main-campus";
 
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [mode, setMode] = mUseState("standard"); // "standard" | "pathway"
+  const [incomeBracket, setIncomeBracketState] = mUseState(null);
 
   const [customSchools, setCustomSchools] = mUseState([]);
   const [customPrograms, setCustomPrograms] = mUseState([]);
   const [aiBusy, setAiBusy] = mUseState(null);
 
   const [inputs, setInputs] = mUseState({
-    schoolId: "uva",
+    schoolId: "university-of-virginia-main-campus",
     programId: "liberal-arts",
     residency: "in",
     years: 4,
@@ -27,7 +28,7 @@ function App() {
   });
   const [compareOn, setCompareOn] = mUseState(false);
   const [inputsB, setInputsB] = mUseState({
-    schoolId: "uva", programId: "computer-science",
+    schoolId: "university-of-virginia-main-campus", programId: "computer-science",
     residency: "in", years: 4, living: "on-campus",
     aid: D.SCHOOLS.find(s => s.id === "uva").avg_aid, aidTouched: false,
     loanTerm: 10, loanRate: 0.0653,
@@ -43,11 +44,27 @@ function App() {
     };
   });
 
+  const onIncomeBracketChange = (bracket) => {
+    setIncomeBracketState(bracket);
+    const findSch = (id) => D.SCHOOLS.find(x => x.id === id) || customSchools.find(x => x.id === id);
+    const schA = findSch(inputs.schoolId);
+    const schB = findSch(inputsB.schoolId);
+    const cc   = findSch(pathwayInputs.ccId);
+    const univ = findSch(pathwayInputs.univId);
+    if (schA) setInputs(s => ({ ...s, aid: window.aidForBracket(schA, bracket), aidTouched: false }));
+    if (schB) setInputsB(s => ({ ...s, aid: window.aidForBracket(schB, bracket), aidTouched: false }));
+    setPathwayInputs(s => ({
+      ...s,
+      ...(cc   ? { aidCC:   window.aidForBracket(cc,   bracket) } : {}),
+      ...(univ  ? { aidUniv: window.aidForBracket(univ, bracket) } : {}),
+    }));
+  };
+
   const makeSetInput = (setter) => (k, v) => setter(s => {
     const next = { ...s, [k]: v };
     if (k === "schoolId") {
       const sch = D.SCHOOLS.find(x => x.id === v) || customSchools.find(x => x.id === v);
-      if (sch && !s.aidTouched) next.aid = sch.avg_aid;
+      if (sch && !s.aidTouched) next.aid = window.aidForBracket(sch, incomeBracket);
       if (sch) {
         const isTwoYr = ["Public 2-yr", "Trade"].includes(sch.type);
         const prog = D.PROGRAMS.find(p => p.id === s.programId);
@@ -70,7 +87,18 @@ function App() {
   });
   const setInput  = makeSetInput(setInputs);
   const setInputB = makeSetInput(setInputsB);
-  const setPathwayInput = (k, v) => setPathwayInputs(s => ({ ...s, [k]: v }));
+  const setPathwayInput = (k, v) => setPathwayInputs(s => {
+    const next = { ...s, [k]: v };
+    if (k === "ccId") {
+      const cc = D.SCHOOLS.find(x => x.id === v) || customSchools.find(x => x.id === v);
+      if (cc) next.aidCC = window.aidForBracket(cc, incomeBracket);
+    }
+    if (k === "univId") {
+      const univ = D.SCHOOLS.find(x => x.id === v) || customSchools.find(x => x.id === v);
+      if (univ) next.aidUniv = window.aidForBracket(univ, incomeBracket);
+    }
+    return next;
+  });
 
   const addCustomSchool = async (q) => {
     setAiBusy({ kind: "school", q });
@@ -78,7 +106,7 @@ function App() {
     setAiBusy(null);
     if (obj) {
       setCustomSchools(s => [...s, obj]);
-      setInputs(s => ({ ...s, schoolId: obj.id, aid: s.aidTouched ? s.aid : (obj.avg_aid ?? 0) }));
+      setInputs(s => ({ ...s, schoolId: obj.id, aid: s.aidTouched ? s.aid : window.aidForBracket(obj, incomeBracket) }));
     }
   };
   const addCustomProgram = async (q) => {
@@ -164,9 +192,11 @@ function App() {
         {mode === "standard"
           ? <InputsPanel inputs={inputs} setInput={setInput}
                          customSchools={customSchools} customPrograms={customPrograms}
-                         addCustomSchool={addCustomSchool} addCustomProgram={addCustomProgram} />
+                         addCustomSchool={addCustomSchool} addCustomProgram={addCustomProgram}
+                         incomeBracket={incomeBracket} onIncomeBracketChange={onIncomeBracketChange} />
           : <PathwayPanel inputs={pathwayInputs} setInput={setPathwayInput}
-                          customSchools={customSchools} customPrograms={customPrograms} />
+                          customSchools={customSchools} customPrograms={customPrograms}
+                          incomeBracket={incomeBracket} onIncomeBracketChange={onIncomeBracketChange} />
         }
 
         <div className="ipt-footer">
@@ -208,7 +238,8 @@ function App() {
             <div className="compare-inputs-wrap">
               <InputsPanel inputs={inputsB} setInput={setInputB}
                            customSchools={customSchools} customPrograms={customPrograms}
-                           addCustomSchool={addCustomSchool} addCustomProgram={addCustomProgram} />
+                           addCustomSchool={addCustomSchool} addCustomProgram={addCustomProgram}
+                           incomeBracket={incomeBracket} onIncomeBracketChange={onIncomeBracketChange} />
             </div>
             <CompareTable a={result} b={resultB} />
           </section>

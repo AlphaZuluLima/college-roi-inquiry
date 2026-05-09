@@ -12,7 +12,7 @@ function getState(city) {
   return s.length === 2 ? s : null;
 }
 
-function PathwayPanel({ inputs, setInput, customSchools, customPrograms }) {
+function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeBracket, onIncomeBracketChange }) {
   const [showAll, setShowAll] = useState(false);
   const allSchools  = [...D.SCHOOLS, ...customSchools];
   const ccSchools   = allSchools.filter(s => CC_TYPES.has(s.type));
@@ -121,6 +121,9 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms }) {
       </div>
 
       <div className="ipt-grid" style={{marginTop:"14px", borderTop:"1px solid var(--rule)", paddingTop:"14px"}}>
+        <Field label="Family income">
+          <IncomeSel value={incomeBracket} onChange={onIncomeBracketChange} />
+        </Field>
         <Field label="Loan term">
           <Segment value={inputs.loanTerm} onChange={v => setInput("loanTerm", v)}
                    options={[[10,"10y"],[15,"15y"],[20,"20y"],[25,"25y"]]} />

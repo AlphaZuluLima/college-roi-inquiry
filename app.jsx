@@ -3,6 +3,39 @@ const { useState, useMemo, useEffect, useRef } = React;
 const { fmt$, fmt$Full, fmtPct, computeROI, fetchUnknownEntity } = window.ROI_CALC;
 const D = window.ROI_DATA;
 
+// Aid for a given income bracket index (0-4), falling back to avg_aid when no data.
+window.aidForBracket = function(school, bracketIdx) {
+  if (bracketIdx == null) return school.avg_aid;
+  const nets = (window.ROI_INCOME || {})[school.id];
+  if (!nets) return school.avg_aid;
+  const net = nets[bracketIdx];
+  if (net == null) return school.avg_aid;
+  const sticker = school.tuition_in + school.room_board + school.books;
+  return Math.max(0, sticker - Math.max(0, net));
+};
+
+const INCOME_BRACKETS = [
+  [null, "Avg. aid"],
+  [0,    "< $30k"],
+  [1,    "$30–48k"],
+  [2,    "$48–75k"],
+  [3,    "$75–110k"],
+  [4,    "> $110k"],
+];
+
+function IncomeSel({ value, onChange }) {
+  return (
+    <select className="income-sel" value={value ?? ""} onChange={e => {
+      const v = e.target.value;
+      onChange(v === "" ? null : Number(v));
+    }}>
+      {INCOME_BRACKETS.map(([v, l]) => (
+        <option key={v ?? "avg"} value={v ?? ""}>{l}</option>
+      ))}
+    </select>
+  );
+}
+
 const TWEAK_DEFAULTS = {
   "accent": "#1F5E55",
   "loanRateOverride": null,
@@ -164,7 +197,7 @@ function HeroStat({ label, value, sublabel, source, accent, big, mono = true, si
 
 const TWO_YR_TYPES = new Set(["Public 2-yr", "Trade"]);
 
-function InputsPanel({ inputs, setInput, customSchools, customPrograms, addCustomSchool, addCustomProgram }) {
+function InputsPanel({ inputs, setInput, customSchools, customPrograms, addCustomSchool, addCustomProgram, incomeBracket, onIncomeBracketChange }) {
   const allSchools = [...D.SCHOOLS, ...customSchools];
   const school = allSchools.find(s => s.id === inputs.schoolId);
   const isTwoYr = school && TWO_YR_TYPES.has(school.type);
@@ -204,6 +237,9 @@ function InputsPanel({ inputs, setInput, customSchools, customPrograms, addCusto
         <Field label="Living">
           <Segment value={inputs.living} onChange={(v) => setInput("living", v)}
                    options={[["on-campus", "On"], ["off-campus", "Off"], ["with-parents", "Parents"]]} />
+        </Field>
+        <Field label="Family income">
+          <IncomeSel value={incomeBracket} onChange={onIncomeBracketChange} />
         </Field>
         <Field label="Annual aid / scholarships">
           <NumInput value={inputs.aid} onChange={(v) => setInput("aid", v)} prefix="$" step={500} />
@@ -246,4 +282,4 @@ function NumInput({ value, onChange, prefix, suffix, step = 1, decimals = 0 }) {
   );
 }
 
-Object.assign(window, { Combobox, Info, HeroStat, InputsPanel, Field, Segment, NumInput, TWEAK_DEFAULTS });
+Object.assign(window, { Combobox, Info, HeroStat, InputsPanel, Field, Segment, NumInput, IncomeSel, TWEAK_DEFAULTS });
