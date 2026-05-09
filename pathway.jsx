@@ -139,6 +139,7 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
 
 function PathwaySummary({ result }) {
   if (!result) return null;
+  const [open, setOpen] = useState(false);
   const {
     cc, univ,
     ccYearly, univYearly, ccNetCost, univNetCost,
@@ -162,6 +163,12 @@ function PathwaySummary({ result }) {
   return (
     <div className="pwy-results">
 
+      <button className="pwy-toggle" onClick={() => setOpen(o => !o)}>
+        <span className="pwy-toggle-label">2+2 Cost Breakdown</span>
+        <span className="pwy-toggle-caret">{open ? "▴" : "▾"}</span>
+      </button>
+
+      {open && <>
       <div className={"pwy-savings-banner" + (savings >= 0 ? "" : " over")}>
         <div className="pwy-savings-num mono">{fmt$(Math.abs(savings))}</div>
         <div className="pwy-savings-lbl">
@@ -200,6 +207,7 @@ function PathwaySummary({ result }) {
           </div>
         ))}
       </div>
+      </>}
 
     </div>
   );
