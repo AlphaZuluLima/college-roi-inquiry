@@ -52,12 +52,13 @@ function App() {
     const schB = findSch(inputsB.schoolId);
     const cc   = findSch(pathwayInputs.ccId);
     const univ = findSch(pathwayInputs.univId);
-    if (schA) setInputs(s => ({ ...s, aid: window.aidForBracket(schA, bracket), aidTouched: false }));
-    if (schB) setInputsB(s => ({ ...s, aid: window.aidForBracket(schB, bracket), aidTouched: false }));
+    const aidFor = (sch) => bracket != null ? window.aidForBracket(sch, bracket) : 0;
+    if (schA) setInputs(s => ({ ...s, aid: aidFor(schA), aidTouched: false }));
+    if (schB) setInputsB(s => ({ ...s, aid: aidFor(schB), aidTouched: false }));
     setPathwayInputs(s => ({
       ...s,
-      ...(cc   ? { aidCC:   window.aidForBracket(cc,   bracket) } : {}),
-      ...(univ  ? { aidUniv: window.aidForBracket(univ, bracket) } : {}),
+      ...(cc   ? { aidCC:   aidFor(cc)   } : {}),
+      ...(univ  ? { aidUniv: aidFor(univ) } : {}),
     }));
   };
 

@@ -15,7 +15,7 @@ window.aidForBracket = function(school, bracketIdx) {
 };
 
 const INCOME_BRACKETS = [
-  [null, "Avg. aid"],
+  [null, "Manual"],
   [0,    "< $30k"],
   [1,    "$30–48k"],
   [2,    "$48–75k"],
