@@ -49,13 +49,11 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
 
         <div className="pwy-phase">
           <div className="pwy-phase-label">Phase 1 — Community College <span className="pwy-phase-years">2 years</span></div>
-          <div className="ipt-row">
-            <div className="ipt-grp ipt-school">
-              <label className="ipt-lbl">Community college</label>
-              <Combobox items={ccSchools} value={inputs.ccId}
-                        onChange={v => { setInput("ccId", v); setShowAll(false); }}
-                        placeholder="Choose a CC…" iconType="school" />
-            </div>
+          <div className="ipt-grp ipt-school">
+            <label className="ipt-lbl">Community college</label>
+            <Combobox items={ccSchools} value={inputs.ccId}
+                      onChange={v => { setInput("ccId", v); setShowAll(false); }}
+                      placeholder="Choose a CC…" iconType="school" />
           </div>
           <div className="ipt-grid">
             <Field label="Residency">
