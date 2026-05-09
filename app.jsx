@@ -20,7 +20,6 @@ const INCOME_BRACKETS = [
   [1,    "$30–48k"],
   [2,    "$48–75k"],
   [3,    "$75–110k"],
-  [4,    "> $110k"],
 ];
 
 function IncomeSel({ value, onChange }) {

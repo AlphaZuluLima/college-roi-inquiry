@@ -9,7 +9,7 @@ const DEFAULT_UNIV = "university-of-virginia-main-campus";
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [mode, setMode] = mUseState("standard"); // "standard" | "pathway"
-  const [incomeBracket, setIncomeBracketState] = mUseState(null);
+  const [incomeBracket, setIncomeBracketState] = mUseState(0);
 
   const [customSchools, setCustomSchools] = mUseState([]);
   const [customPrograms, setCustomPrograms] = mUseState([]);
@@ -21,7 +21,7 @@ function App() {
     residency: "in",
     years: 4,
     living: "on-campus",
-    aid: D.SCHOOLS.find(s => s.id === "university-of-virginia-main-campus").avg_aid,
+    aid: window.aidForBracket(D.SCHOOLS.find(s => s.id === "university-of-virginia-main-campus"), 0),
     aidTouched: false,
     loanTerm: 10,
     loanRate: 0.0653,
@@ -30,7 +30,7 @@ function App() {
   const [inputsB, setInputsB] = mUseState({
     schoolId: "university-of-virginia-main-campus", programId: "computer-science",
     residency: "in", years: 4, living: "on-campus",
-    aid: D.SCHOOLS.find(s => s.id === "university-of-virginia-main-campus").avg_aid, aidTouched: false,
+    aid: window.aidForBracket(D.SCHOOLS.find(s => s.id === "university-of-virginia-main-campus"), 0), aidTouched: false,
     loanTerm: 10, loanRate: 0.0653,
   });
   const [pathwayInputs, setPathwayInputs] = mUseState(() => {
@@ -38,8 +38,8 @@ function App() {
     const univ = D.SCHOOLS.find(s => s.id === DEFAULT_UNIV);
     return {
       ccId: DEFAULT_CC, univId: DEFAULT_UNIV, programId: "computer-science",
-      residencyCC: "in",   livingCC: "with-parents", aidCC:   cc?.avg_aid   ?? 0,
-      residencyUniv: "in", livingUniv: "on-campus",  aidUniv: univ?.avg_aid ?? 0,
+      residencyCC: "in",   livingCC: "with-parents", aidCC:   window.aidForBracket(cc,   0) ?? 0,
+      residencyUniv: "in", livingUniv: "on-campus",  aidUniv: window.aidForBracket(univ, 0) ?? 0,
       loanTerm: 10, loanRate: 0.0653,
     };
   });
