@@ -80,7 +80,8 @@
     const totalAllIn = totalAid + principal + totalInterest;
 
     const sal = projectedSalary(school, program, { scenarioMult });
-    const salStart = sal.start;
+    const scorecard = (window.ROI_EARNINGS || {})[school.id]?.[program.id];
+    const salStart = scorecard?.sal2yr ? scorecard.sal2yr * scenarioMult : sal.start;
     const salMid = sal.mid;
     const empRate = Math.min(0.99, school.employ_6mo * (program.employ_field) ** 0.7 * scenarioMult);
     const expectedAnnual = (yr) => salaryAtYear(salStart, salMid, opts.salaryGrowth ?? program.growth, yr) * empRate;
@@ -203,7 +204,8 @@
     const savings = directNetCost - (ccNetCost + univNetCost);
 
     const sal      = projectedSalary(univ, program, { scenarioMult });
-    const salStart = sal.start;
+    const scorecard2p2 = (window.ROI_EARNINGS || {})[univ.id]?.[program.id];
+    const salStart = scorecard2p2?.sal2yr ? scorecard2p2.sal2yr * scenarioMult : sal.start;
     const salMid   = sal.mid;
     const empRate  = Math.min(0.99, univ.employ_6mo * (program.employ_field) ** 0.7 * scenarioMult);
     const expectedAnnual = (yr) => salaryAtYear(salStart, salMid, opts.salaryGrowth ?? program.growth, yr) * empRate;
