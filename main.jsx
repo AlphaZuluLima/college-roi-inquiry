@@ -233,22 +233,19 @@ function App() {
 
       <div className="rule" />
 
+      {mode === "standard" && compareOn && resultB && (
+        <section className="compare-section">
+          <div className="rs-kicker">Comparison</div>
+          <h2 className="rs-title">vs. {resultB.school.short} · {resultB.program.name}</h2>
+          <CompareTable a={result} b={resultB} />
+        </section>
+      )}
+
       {mode === "pathway" && result && <PathwaySummary result={result} />}
 
       <ResultsView result={result} />
 
       {result && !isEstimated && <FreshnessBadge />}
-
-      {mode === "standard" && compareOn && resultB && (
-        <>
-          <div className="rule double" />
-          <section className="compare-section">
-            <div className="rs-kicker">Comparison</div>
-            <h2 className="rs-title">vs. {resultB.school.short} · {resultB.program.name}</h2>
-            <CompareTable a={result} b={resultB} />
-          </section>
-        </>
-      )}
 
       <footer className="page-footer">
         <div className="footer-cols">
