@@ -251,7 +251,7 @@ function CompareBars({ result, height = 220, width = 600 }) {
     { label: "Compounded scholarship offer + HS-only earnings, no degree", short: "HS + invest the cost", value: result.lifetimeInvest, color: "var(--alt)" },
     { label: "HS diploma only", value: result.lifetimeHs, color: "var(--hs)" },
   ];
-  const max = Math.max(...items.map(i => i.value), 0);
+  const max = Math.max(...items.map(i => i.value), 1);
   const m = { l: 200, r: 80, t: 8, b: 8 };
   const W = width - m.l - m.r;
   const rowH = (height - m.t - m.b) / items.length;
