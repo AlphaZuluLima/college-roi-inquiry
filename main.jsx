@@ -200,6 +200,16 @@ function App() {
                           incomeBracket={incomeBracket} onIncomeBracketChange={onIncomeBracketChange} />
         }
 
+        {mode === "standard" && compareOn && (
+          <>
+            <div className="compare-divider" />
+            <InputsPanel inputs={inputsB} setInput={setInputB}
+                         customSchools={customSchools} customPrograms={customPrograms}
+                         addCustomSchool={addCustomSchool} addCustomProgram={addCustomProgram}
+                         incomeBracket={incomeBracket} onIncomeBracketChange={onIncomeBracketChange} />
+          </>
+        )}
+
         <div className="ipt-footer">
           {mode === "standard" && (
             <button className={"compare-btn" + (compareOn ? " on" : "")}
@@ -235,13 +245,6 @@ function App() {
           <section className="compare-section">
             <div className="rs-kicker">Comparison</div>
             <h2 className="rs-title">vs. {resultB.school.short} · {resultB.program.name}</h2>
-            <p className="rs-dek">A second path, side-by-side. Adjust its inputs below.</p>
-            <div className="compare-inputs-wrap">
-              <InputsPanel inputs={inputsB} setInput={setInputB}
-                           customSchools={customSchools} customPrograms={customPrograms}
-                           addCustomSchool={addCustomSchool} addCustomProgram={addCustomProgram}
-                           incomeBracket={incomeBracket} onIncomeBracketChange={onIncomeBracketChange} />
-            </div>
             <CompareTable a={result} b={resultB} />
           </section>
         </>
