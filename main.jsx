@@ -9,7 +9,7 @@ const DEFAULT_UNIV = "university-of-virginia-main-campus";
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [mode, setMode] = mUseState("standard"); // "standard" | "pathway"
-  const [incomeBracket, setIncomeBracketState] = mUseState(0);
+  const [incomeBracket, setIncomeBracketState] = mUseState(null);
 
   const [customSchools, setCustomSchools] = mUseState([]);
   const [customPrograms, setCustomPrograms] = mUseState([]);
@@ -21,7 +21,7 @@ function App() {
     residency: "in",
     years: 4,
     living: "on-campus",
-    aid: window.aidForBracket(D.SCHOOLS.find(s => s.id === "university-of-virginia-main-campus"), 0),
+    aid: 0,
     aidTouched: false,
     loanTerm: 10,
     loanRate: 0.0653,
@@ -30,7 +30,7 @@ function App() {
   const [inputsB, setInputsB] = mUseState({
     schoolId: "university-of-virginia-main-campus", programId: "computer-science",
     residency: "in", years: 4, living: "on-campus",
-    aid: window.aidForBracket(D.SCHOOLS.find(s => s.id === "university-of-virginia-main-campus"), 0), aidTouched: false,
+    aid: 0, aidTouched: false,
     loanTerm: 10, loanRate: 0.0653,
   });
   const [pathwayInputs, setPathwayInputs] = mUseState(() => {
@@ -38,8 +38,8 @@ function App() {
     const univ = D.SCHOOLS.find(s => s.id === DEFAULT_UNIV);
     return {
       ccId: DEFAULT_CC, univId: DEFAULT_UNIV, programId: "computer-science",
-      residencyCC: "in",   livingCC: "with-parents", aidCC:   window.aidForBracket(cc,   0) ?? 0,
-      residencyUniv: "in", livingUniv: "on-campus",  aidUniv: window.aidForBracket(univ, 0) ?? 0,
+      residencyCC: "in",   livingCC: "with-parents", aidCC:   0,
+      residencyUniv: "in", livingUniv: "on-campus",  aidUniv: 0,
       loanTerm: 10, loanRate: 0.0653,
     };
   });
@@ -64,7 +64,7 @@ function App() {
     const next = { ...s, [k]: v };
     if (k === "schoolId") {
       const sch = D.SCHOOLS.find(x => x.id === v) || customSchools.find(x => x.id === v);
-      if (sch && !s.aidTouched) next.aid = window.aidForBracket(sch, incomeBracket);
+      if (sch && !s.aidTouched) next.aid = incomeBracket != null ? window.aidForBracket(sch, incomeBracket) : 0;
       if (sch) {
         const isTwoYr = ["Public 2-yr", "Trade"].includes(sch.type);
         const prog = D.PROGRAMS.find(p => p.id === s.programId);
@@ -91,11 +91,11 @@ function App() {
     const next = { ...s, [k]: v };
     if (k === "ccId") {
       const cc = D.SCHOOLS.find(x => x.id === v) || customSchools.find(x => x.id === v);
-      if (cc) next.aidCC = window.aidForBracket(cc, incomeBracket);
+      if (cc) next.aidCC = incomeBracket != null ? window.aidForBracket(cc, incomeBracket) : 0;
     }
     if (k === "univId") {
       const univ = D.SCHOOLS.find(x => x.id === v) || customSchools.find(x => x.id === v);
-      if (univ) next.aidUniv = window.aidForBracket(univ, incomeBracket);
+      if (univ) next.aidUniv = incomeBracket != null ? window.aidForBracket(univ, incomeBracket) : 0;
     }
     return next;
   });
