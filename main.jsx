@@ -68,8 +68,7 @@ function App() {
       if (sch) {
         const isTwoYr = ["Public 2-yr", "Trade"].includes(sch.type);
         const prog = D.PROGRAMS.find(p => p.id === s.programId);
-        const progOffered = !sch.offered || sch.offered.includes(s.programId);
-        if (isTwoYr !== (prog?.typical_years === 2) || !progOffered) {
+        if (isTwoYr !== (prog?.typical_years === 2)) {
           const fallback = D.PROGRAMS.find(p =>
             (isTwoYr ? p.typical_years === 2 : p.typical_years !== 2) &&
             (!sch.offered || sch.offered.includes(p.id))
