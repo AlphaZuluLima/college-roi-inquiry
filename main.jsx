@@ -37,7 +37,7 @@ function App() {
     const cc   = D.SCHOOLS.find(s => s.id === DEFAULT_CC);
     const univ = D.SCHOOLS.find(s => s.id === DEFAULT_UNIV);
     return {
-      ccId: DEFAULT_CC, univId: DEFAULT_UNIV, programId: "computer-science",
+      ccId: DEFAULT_CC, univId: DEFAULT_UNIV, programId: "liberal-arts",
       residencyCC: "in",   livingCC: "with-parents", aidCC:   0,
       residencyUniv: "in", livingUniv: "on-campus",  aidUniv: 0,
       loanTerm: 10, loanRate: 0.0653,
