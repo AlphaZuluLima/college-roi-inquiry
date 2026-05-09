@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+
+# Node (if ever added)
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Local secrets / scratch
+*.local
+
+# Claude Code project settings
+.claude/
+
+# Intermediate build/fetch artifacts
+all_schools.js
+va_schools.js
+fetch_all.log
+
+# Screenshots
+*.png
+*.jpg
+*.jpeg

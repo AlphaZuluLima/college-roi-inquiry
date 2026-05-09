@@ -1,0 +1,249 @@
+// app.jsx — Input components: Combobox, Info, HeroStat, InputsPanel.
+const { useState, useMemo, useEffect, useRef } = React;
+const { fmt$, fmt$Full, fmtPct, computeROI, fetchUnknownEntity } = window.ROI_CALC;
+const D = window.ROI_DATA;
+
+const TWEAK_DEFAULTS = {
+  "accent": "#1F5E55",
+  "loanRateOverride": null,
+  "salaryGrowth": null,
+  "discountRate": 0.03,
+  "scenario": "base",
+  "showTweaks": true
+};
+
+const SCHOOL_TYPES = ["Public 4-yr", "Private 4-yr", "Liberal Arts", "Public 2-yr", "Trade"];
+
+function Combobox({ items, value, onChange, placeholder, displayKey = "name", iconType = "school", onCustom }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const [typeFilter, setTypeFilter] = useState(null);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const selected = items.find(x => x.id === value);
+  const filt = useMemo(() => {
+    const limit = iconType === "program" ? Infinity : 50;
+    let pool = items;
+    if (iconType === "school" && typeFilter) pool = pool.filter(x => x.type === typeFilter);
+    if (!q) return pool.slice(0, limit);
+    const Q = q.toLowerCase();
+    return pool.filter(x =>
+      x[displayKey]?.toLowerCase().includes(Q) ||
+      (x.short || "").toLowerCase().includes(Q) ||
+      (x.group || "").toLowerCase().includes(Q)
+    ).slice(0, limit);
+  }, [q, items, displayKey, iconType, typeFilter]);
+
+  const grouped = useMemo(() => {
+    if (iconType !== "program") return null;
+    const g = {};
+    for (const it of filt) { (g[it.group] ??= []).push(it); }
+    return g;
+  }, [filt, iconType]);
+
+  return (
+    <div className="cb" ref={ref}>
+      <button className={"cb-trigger" + (open ? " open" : "")} onClick={() => setOpen(o => !o)}>
+        <span className="cb-icon">{iconType === "school" ? "◇" : "◊"}</span>
+        <span className="cb-text">{selected ? selected[displayKey] : <em>{placeholder}</em>}</span>
+        <span className="cb-caret">▾</span>
+      </button>
+      {open && (
+        <div className="cb-pop">
+          {iconType === "school" && (
+            <div className="cb-type-filters">
+              <button className={"cb-type-btn" + (!typeFilter ? " on" : "")}
+                      onClick={() => setTypeFilter(null)}>All</button>
+              {SCHOOL_TYPES.map(t => (
+                <button key={t} className={"cb-type-btn" + (typeFilter === t ? " on" : "")}
+                        onClick={() => setTypeFilter(f => f === t ? null : t)}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="cb-search">
+            <input
+              autoFocus value={q} onChange={(e) => setQ(e.target.value)}
+              placeholder={iconType === "school" ? "Search school or type any college…" : "Search program or type a major…"}
+            />
+          </div>
+          <div className="cb-list">
+            {grouped ? (
+              Object.entries(grouped).map(([g, lst]) => (
+                <div key={g}>
+                  <div className="cb-group">{g}</div>
+                  {lst.map(x => (
+                    <button key={x.id} className={"cb-item" + (x.id === value ? " sel" : "")}
+                            onClick={() => { onChange(x.id); setOpen(false); setQ(""); }}>
+                      <span className="cb-item-name">{x[displayKey]}</span>
+                      {x.typical_years && <span className="badge-yrs">{x.typical_years}yr</span>}
+                      {x._estimated && <span className="badge-ai">AI est.</span>}
+                    </button>
+                  ))}
+                </div>
+              ))
+            ) : (
+              filt.map(x => (
+                <button key={x.id} className={"cb-item" + (x.id === value ? " sel" : "")}
+                        onClick={() => { onChange(x.id); setOpen(false); setQ(""); }}>
+                  <span className="cb-item-name">{x[displayKey]}</span>
+                  <span className="cb-item-meta">
+                    {x.type || x.group}
+                    {x._estimated && <span className="badge-ai">AI est.</span>}
+                  </span>
+                </button>
+              ))
+            )}
+            {q && onCustom && filt.length < 5 && (
+              <button className="cb-item cb-custom" onClick={() => { onCustom(q); setOpen(false); setQ(""); }}>
+                <span className="cb-item-name"><b>+ Use "{q}"</b></span>
+                <span className="cb-item-meta">AI estimate</span>
+              </button>
+            )}
+            {filt.length === 0 && !onCustom && <div className="cb-empty">No matches.</div>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Info({ label, source, detail, position = "bottom" }) {
+  const [open, setOpen] = useState(false);
+  const isObj = source && typeof source === "object";
+  return (
+    <span className="info-wrap">
+      <button className="info-btn"
+              onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}
+              onClick={() => setOpen(o => !o)}>
+        <svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.6" fill="none" stroke="currentColor" strokeWidth="0.9"/><text x="5.5" y="8.2" textAnchor="middle" fontSize="7" fontFamily="serif" fontStyle="italic">i</text></svg>
+      </button>
+      {open && (
+        <span className={"info-pop " + position}>
+          {label && <b>{label}</b>}
+          {detail && <span className="info-detail">{detail}</span>}
+          {source && (isObj ? (
+            <>
+              <span className="info-src"><em>Source</em> {source.src}</span>
+              <span className="info-meta">
+                <span><em>Vintage</em> {source.vintage}</span>
+                <span><em>Released</em> {source.released}</span>
+                <span><em>Cadence</em> {source.cadence}</span>
+              </span>
+            </>
+          ) : (
+            <span className="info-src">Source: {source}</span>
+          ))}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function HeroStat({ label, value, sublabel, source, accent, big, mono = true, sign }) {
+  return (
+    <div className={"hero-stat" + (big ? " big" : "")}>
+      <div className="hero-label">
+        {label} {source && <Info label={label} source={source} />}
+      </div>
+      <div className={"hero-num" + (accent ? " " + accent : "") + (mono ? " mono" : "")}>
+        {sign === "neg" ? <span className="neg">{value}</span> :
+         sign === "pos" ? <span className="pos">{value}</span> : value}
+      </div>
+      {sublabel && <div className="hero-sub">{sublabel}</div>}
+    </div>
+  );
+}
+
+const TWO_YR_TYPES = new Set(["Public 2-yr", "Trade"]);
+
+function InputsPanel({ inputs, setInput, customSchools, customPrograms, addCustomSchool, addCustomProgram }) {
+  const allSchools = [...D.SCHOOLS, ...customSchools];
+  const school = allSchools.find(s => s.id === inputs.schoolId);
+  const isTwoYr = school && TWO_YR_TYPES.has(school.type);
+  const allPrograms = [...D.PROGRAMS, ...customPrograms].filter(p => {
+    if (isTwoYr ? p.typical_years !== 2 : p.typical_years === 2) return false;
+    if (school?.offered) return school.offered.includes(p.id);
+    return true;
+  });
+  return (
+    <div className="inputs">
+      <div className="ipt-row">
+        <div className="ipt-grp ipt-school">
+          <label className="ipt-lbl">School</label>
+          <Combobox items={allSchools} value={inputs.schoolId}
+                    onChange={(v) => setInput("schoolId", v)}
+                    placeholder="Choose a school…" iconType="school"
+                    onCustom={addCustomSchool} />
+        </div>
+        <div className="ipt-grp ipt-program">
+          <label className="ipt-lbl">Program / major</label>
+          <Combobox items={allPrograms} value={inputs.programId}
+                    onChange={(v) => setInput("programId", v)}
+                    placeholder="Choose a program…" iconType="program"
+                    onCustom={addCustomProgram} />
+        </div>
+      </div>
+
+      <div className="ipt-grid">
+        <Field label="Residency">
+          <Segment value={inputs.residency} onChange={(v) => setInput("residency", v)}
+                   options={[["in", "In-state"], ["out", "Out-of-state"]]} />
+        </Field>
+        <Field label="Years to complete">
+          <Segment value={inputs.years} onChange={(v) => setInput("years", v)}
+                   options={[[2, "2"], [4, "4"], [5, "5"], [6, "6"]]} />
+        </Field>
+        <Field label="Living">
+          <Segment value={inputs.living} onChange={(v) => setInput("living", v)}
+                   options={[["on-campus", "On"], ["off-campus", "Off"], ["with-parents", "Parents"]]} />
+        </Field>
+        <Field label="Annual aid / scholarships">
+          <NumInput value={inputs.aid} onChange={(v) => setInput("aid", v)} prefix="$" step={500} />
+        </Field>
+        <Field label="Loan term">
+          <Segment value={inputs.loanTerm} onChange={(v) => setInput("loanTerm", v)}
+                   options={[[10, "10y"], [15, "15y"], [20, "20y"], [25, "25y"]]} />
+        </Field>
+        <Field label={<span>Loan rate <Info source={D.SOURCES.loanRate} detail="2024–25 federal direct subsidized rate is 6.53%. Override below." /></span>}>
+          <NumInput value={Math.round(inputs.loanRate * 10000) / 100} onChange={(v) => setInput("loanRate", v / 100)} suffix="%" step={0.1} decimals={2} />
+        </Field>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return <div className="field"><label className="ipt-lbl">{label}</label>{children}</div>;
+}
+
+function Segment({ value, onChange, options }) {
+  return (
+    <div className="seg">
+      {options.map(([v, l]) => (
+        <button key={v} className={"seg-opt" + (v === value ? " on" : "")}
+                onClick={() => onChange(v)}>{l}</button>
+      ))}
+    </div>
+  );
+}
+
+function NumInput({ value, onChange, prefix, suffix, step = 1, decimals = 0 }) {
+  return (
+    <div className="numinp">
+      {prefix && <span className="numinp-pre">{prefix}</span>}
+      <input type="number" value={value} step={step}
+             onChange={(e) => onChange(parseFloat(e.target.value) || 0)} />
+      {suffix && <span className="numinp-suf">{suffix}</span>}
+    </div>
+  );
+}
+
+Object.assign(window, { Combobox, Info, HeroStat, InputsPanel, Field, Segment, NumInput, TWEAK_DEFAULTS });
