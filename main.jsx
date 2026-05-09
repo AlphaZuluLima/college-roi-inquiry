@@ -234,11 +234,14 @@ function App() {
       <div className="rule" />
 
       {mode === "standard" && compareOn && resultB && (
-        <section className="compare-section">
-          <div className="rs-kicker">Comparison</div>
-          <h2 className="rs-title">vs. {resultB.school.short} · {resultB.program.name}</h2>
-          <CompareTable a={result} b={resultB} />
-        </section>
+        <>
+          <section className="compare-section">
+            <div className="rs-kicker">Comparison</div>
+            <h2 className="rs-title">vs. {resultB.school.short} · {resultB.program.name}</h2>
+            <CompareTable a={result} b={resultB} />
+          </section>
+          <div className="rule" />
+        </>
       )}
 
       {mode === "pathway" && result && <PathwaySummary result={result} />}
