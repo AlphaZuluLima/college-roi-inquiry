@@ -59,8 +59,8 @@
   }
 
   function computeROI(opts) {
-    const school = getSchool(opts.schoolId);
-    const program = getProgram(opts.programId);
+    const school = window.ROI_CALC.getSchool(opts.schoolId);
+    const program = window.ROI_CALC.getProgram(opts.programId);
     if (!school || !program) return null;
 
     const scenarioMult = opts.scenario === "optimistic" ? 1.12
@@ -175,9 +175,9 @@
   }
 
   function compute2plus2(opts) {
-    const cc    = getSchool(opts.ccId);
-    const univ  = getSchool(opts.univId);
-    const program = getProgram(opts.programId);
+    const cc    = window.ROI_CALC.getSchool(opts.ccId);
+    const univ  = window.ROI_CALC.getSchool(opts.univId);
+    const program = window.ROI_CALC.getProgram(opts.programId);
     if (!cc || !univ || !program) return null;
 
     const scenarioMult = opts.scenario === "optimistic" ? 1.12
