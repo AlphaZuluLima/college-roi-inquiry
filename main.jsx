@@ -21,7 +21,7 @@ function App() {
     residency: "in",
     years: 4,
     living: "on-campus",
-    aid: D.SCHOOLS.find(s => s.id === "uva").avg_aid,
+    aid: D.SCHOOLS.find(s => s.id === "university-of-virginia-main-campus").avg_aid,
     aidTouched: false,
     loanTerm: 10,
     loanRate: 0.0653,
@@ -30,7 +30,7 @@ function App() {
   const [inputsB, setInputsB] = mUseState({
     schoolId: "university-of-virginia-main-campus", programId: "computer-science",
     residency: "in", years: 4, living: "on-campus",
-    aid: D.SCHOOLS.find(s => s.id === "uva").avg_aid, aidTouched: false,
+    aid: D.SCHOOLS.find(s => s.id === "university-of-virginia-main-campus").avg_aid, aidTouched: false,
     loanTerm: 10, loanRate: 0.0653,
   });
   const [pathwayInputs, setPathwayInputs] = mUseState(() => {
