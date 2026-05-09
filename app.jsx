@@ -46,10 +46,18 @@ const TWEAK_DEFAULTS = {
 
 const SCHOOL_TYPES = ["Public 4-yr", "Private 4-yr", "Liberal Arts", "Public 2-yr", "Trade"];
 
+function schoolState(school) {
+  const city = school.city || "";
+  if (!city.includes(", ")) return null;
+  const s = city.split(", ").pop();
+  return s.length === 2 ? s : null;
+}
+
 function Combobox({ items, value, onChange, placeholder, displayKey = "name", iconType = "school", onCustom }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [typeFilter, setTypeFilter] = useState(null);
+  const [stateFilter, setStateFilter] = useState("");
   const ref = useRef(null);
 
   useEffect(() => {
@@ -58,11 +66,19 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  const states = useMemo(() => {
+    if (iconType !== "school") return [];
+    const set = new Set();
+    for (const x of items) { const s = schoolState(x); if (s) set.add(s); }
+    return [...set].sort();
+  }, [items, iconType]);
+
   const selected = items.find(x => x.id === value);
   const filt = useMemo(() => {
     const limit = iconType === "program" ? Infinity : 50;
     let pool = items;
     if (iconType === "school" && typeFilter) pool = pool.filter(x => x.type === typeFilter);
+    if (iconType === "school" && stateFilter) pool = pool.filter(x => schoolState(x) === stateFilter);
     if (!q) return pool.slice(0, limit);
     const Q = q.toLowerCase();
     return pool.filter(x =>
@@ -70,7 +86,7 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
       (x.short || "").toLowerCase().includes(Q) ||
       (x.group || "").toLowerCase().includes(Q)
     ).slice(0, limit);
-  }, [q, items, displayKey, iconType, typeFilter]);
+  }, [q, items, displayKey, iconType, typeFilter, stateFilter]);
 
   const grouped = useMemo(() => {
     if (iconType !== "program") return null;
@@ -98,6 +114,11 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
                   {t}
                 </button>
               ))}
+              <select className="cb-state-sel" value={stateFilter}
+                      onChange={e => setStateFilter(e.target.value)}>
+                <option value="">All states</option>
+                {states.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
             </div>
           )}
           <div className="cb-search">
