@@ -6,12 +6,6 @@ const D = window.ROI_DATA;
 const FOUR_YR_TYPES = new Set(["Public 4-yr", "Private 4-yr", "Liberal Arts"]);
 const CC_TYPES      = new Set(["Public 2-yr"]);
 
-function getState(city) {
-  if (!city || !city.includes(", ")) return null;
-  const s = city.split(", ").pop();
-  return s.length === 2 ? s : null;
-}
-
 function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeBracket, onIncomeBracketChange }) {
   const [showAll, setShowAll] = useState(false);
   const allSchools  = [...D.SCHOOLS, ...customSchools];
@@ -19,13 +13,13 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
   const all4yr      = allSchools.filter(s => FOUR_YR_TYPES.has(s.type));
 
   const cc = allSchools.find(s => s.id === inputs.ccId);
-  const ccState = getState(cc?.city);
+  const ccState = window.schoolState(cc);
   const hasPartners = cc?.transfer_partners?.length > 0;
 
   const univSchools = useMemo(() => {
     if (showAll || !cc) return all4yr;
     if (hasPartners) return all4yr.filter(s => cc.transfer_partners.includes(s.id));
-    if (ccState) return all4yr.filter(s => getState(s.city) === ccState);
+    if (ccState) return all4yr.filter(s => window.schoolState(s) === ccState);
     return all4yr;
   }, [all4yr, cc, ccState, hasPartners, showAll]);
 

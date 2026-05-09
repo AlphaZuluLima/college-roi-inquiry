@@ -107,7 +107,7 @@ function App() {
     setAiBusy(null);
     if (obj) {
       setCustomSchools(s => [...s, obj]);
-      setInputs(s => ({ ...s, schoolId: obj.id, aid: s.aidTouched ? s.aid : window.aidForBracket(obj, incomeBracket) }));
+      setInputs(s => ({ ...s, schoolId: obj.id, aid: s.aidTouched ? s.aid : (incomeBracket != null ? window.aidForBracket(obj, incomeBracket) : 0) }));
     }
   };
   const addCustomProgram = async (q) => {
@@ -117,13 +117,10 @@ function App() {
     if (obj) { setCustomPrograms(s => [...s, obj]); setInput("programId", obj.id); }
   };
 
-  mUseEffect(() => {
-    const origGetSchool  = ROI_CALC.getSchool;
-    const origGetProgram = ROI_CALC.getProgram;
-    ROI_CALC.getSchool  = (id) => D.SCHOOLS.find(s => s.id === id)  || customSchools.find(s => s.id === id);
-    ROI_CALC.getProgram = (id) => D.PROGRAMS.find(p => p.id === id) || customPrograms.find(p => p.id === id);
-    return () => { ROI_CALC.getSchool = origGetSchool; ROI_CALC.getProgram = origGetProgram; };
-  }, [customSchools, customPrograms]);
+  // Patch synchronously so the useMemos below see custom entities on the same render cycle
+  // that adds them (useEffect would fire too late — after the memos already ran).
+  ROI_CALC.getSchool  = (id) => D.SCHOOLS.find(s => s.id === id)  || customSchools.find(s => s.id === id);
+  ROI_CALC.getProgram = (id) => D.PROGRAMS.find(p => p.id === id) || customPrograms.find(p => p.id === id);
 
   const opts = mUseMemo(() => ({
     ...inputs, salaryGrowth: t.salaryGrowth, discountRate: t.discountRate, scenario: t.scenario,

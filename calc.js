@@ -313,7 +313,7 @@ salary_start = median earnings 1 yr post-grad, salary_mid = ~10 yr post-grad. gr
 
     try {
       const text = await window.claude.complete(prompt);
-      const cleaned = text.trim().replace(/^```json|^```|```$/g, "").trim();
+      const cleaned = text.trim().replace(/^```(?:json)?\s*\n?|\n?```\s*$/g, "").trim();
       const obj = JSON.parse(cleaned);
       if (!obj.id) obj.id = "ai_" + query.toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 30);
       obj._estimated = true;

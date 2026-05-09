@@ -47,7 +47,7 @@ const TWEAK_DEFAULTS = {
 const SCHOOL_TYPES = ["Public 4-yr", "Private 4-yr", "Liberal Arts", "Public 2-yr", "Trade"];
 
 function schoolState(school) {
-  const city = school.city || "";
+  const city = school?.city || "";
   if (!city.includes(", ")) return null;
   const s = city.split(", ").pop();
   return s.length === 2 ? s : null;
@@ -168,7 +168,7 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
   );
 }
 
-function Info({ label, source, detail, position = "bottom" }) {
+function Info({ label, source, detail }) {
   const [open, setOpen] = useState(false);
   const isObj = source && typeof source === "object";
   return (
@@ -179,7 +179,7 @@ function Info({ label, source, detail, position = "bottom" }) {
         <svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.6" fill="none" stroke="currentColor" strokeWidth="0.9"/><text x="5.5" y="8.2" textAnchor="middle" fontSize="7" fontFamily="serif" fontStyle="italic">i</text></svg>
       </button>
       {open && (
-        <span className={"info-pop " + position}>
+        <span className="info-pop">
           {label && <b>{label}</b>}
           {detail && <span className="info-detail">{detail}</span>}
           {source && (isObj ? (

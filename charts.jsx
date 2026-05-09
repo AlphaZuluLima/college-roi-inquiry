@@ -360,6 +360,7 @@ function Spark({ data, color = "var(--ink-2)", width = 110, height = 28 }) {
 function niceTicks(min, max, n) {
   const range = max - min;
   const step = niceStep(range / n);
+  if (!step) return [min];
   const start = Math.ceil(min / step) * step;
   const end = Math.floor(max / step) * step;
   const out = [];
@@ -367,6 +368,7 @@ function niceTicks(min, max, n) {
   return out;
 }
 function niceStep(raw) {
+  if (!raw) return 0;
   const exp = Math.floor(Math.log10(Math.abs(raw)));
   const f = raw / Math.pow(10, exp);
   let nf;
