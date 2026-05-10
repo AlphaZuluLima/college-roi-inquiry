@@ -6,7 +6,11 @@ const D = window.ROI_DATA;
 const FOUR_YR_TYPES = new Set(["Public 4-yr", "Private 4-yr", "Liberal Arts"]);
 const CC_TYPES      = new Set(["Public 2-yr"]);
 
-function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeBracket, onIncomeBracketChange }) {
+function PathwayPanel({
+  inputs, setInput,
+  customSchools = [], customPrograms = [],
+  incomeBracket, onIncomeBracketChange,
+}) {
   const [showAll, setShowAll] = useState(false);
 
   const allSchools = useMemo(
@@ -26,7 +30,7 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
     () => allSchools.find(s => s.id === inputs.ccId),
     [allSchools, inputs.ccId]
   );
-  const ccState    = window.schoolState(cc);
+  const ccState    = cc ? window.schoolState(cc) : null;
   const hasPartners = cc?.transfer_partners?.length > 0;
 
   const univSchools = useMemo(() => {
@@ -55,6 +59,17 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
     });
   }, [customPrograms, univ]);
 
+  const handleCCChange = v => {
+    setInput("ccId", v);
+    setInput("univId", null);
+    setInput("programId", null);
+    setShowAll(false);
+  };
+  const handleUnivChange = v => {
+    setInput("univId", v);
+    setInput("programId", null);
+  };
+
   return (
     <div className="inputs pwy-inputs">
       <div className="pwy-phases">
@@ -64,7 +79,7 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
           <div className="ipt-grp ipt-school">
             <label className="ipt-lbl">Community college</label>
             <Combobox items={ccSchools} value={inputs.ccId}
-                      onChange={v => { setInput("ccId", v); setInput("univId", null); setInput("programId", null); setShowAll(false); }}
+                      onChange={handleCCChange}
                       placeholder="Choose a CC…" iconType="school" />
           </div>
           <div className="ipt-grid">
@@ -107,7 +122,7 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
                 </span>
               </div>
               <Combobox items={univSchools} value={inputs.univId}
-                        onChange={v => { setInput("univId", v); setInput("programId", null); }}
+                        onChange={handleUnivChange}
                         placeholder="Choose a university…" iconType="school" />
             </div>
             <div className="ipt-grp ipt-program">
@@ -167,12 +182,13 @@ function PathwaySummary({ result }) {
     savings,
   } = result;
 
+  const n = v => Number(v) || 0;
   const costRows = [
-    { lbl: "Tuition",       cc: ccYearly.tuition   * 2, univ: univYearly.tuition   * 2, direct: univYearly.tuition   * 4 },
-    { lbl: "Room & board",  cc: ccYearly.roomBoard  * 2, univ: univYearly.roomBoard  * 2, direct: univYearly.roomBoard  * 4 },
-    { lbl: "Books",         cc: ccYearly.books      * 2, univ: univYearly.books      * 2, direct: univYearly.books      * 4 },
-    { lbl: "Aid received",  cc: -ccYearly.aid       * 2, univ: -univYearly.aid       * 2, direct: -univYearly.aid       * 4, neg: true },
-    { lbl: "Net cost",      cc: ccNetCost,               univ: univNetCost,               direct: directNetCost, bold: true },
+    { lbl: "Tuition",       cc: n(ccYearly.tuition)   * 2, univ: n(univYearly.tuition)   * 2, direct: n(univYearly.tuition)   * 4 },
+    { lbl: "Room & board",  cc: n(ccYearly.roomBoard)  * 2, univ: n(univYearly.roomBoard)  * 2, direct: n(univYearly.roomBoard)  * 4 },
+    { lbl: "Books",         cc: n(ccYearly.books)      * 2, univ: n(univYearly.books)      * 2, direct: n(univYearly.books)      * 4 },
+    { lbl: "Aid received",  cc: -n(ccYearly.aid)       * 2, univ: -n(univYearly.aid)       * 2, direct: -n(univYearly.aid)       * 4, neg: true },
+    { lbl: "Net cost",      cc: ccNetCost,                   univ: univNetCost,                   direct: directNetCost, bold: true },
     { lbl: "Loan interest", cc: null, univ: null, direct: null,
       total: totalInterest, directTotal: directTotalInterest },
     { lbl: "Total all-in",  cc: null, univ: null, direct: null,
@@ -188,46 +204,46 @@ function PathwaySummary({ result }) {
         <span className="pwy-toggle-caret" aria-hidden="true">{open ? "▴" : "▾"}</span>
       </button>
 
-      {open && <>
-      <div className={"pwy-savings-banner" + (savings >= 0 ? "" : " over")}>
-        <div className="pwy-savings-num mono">{fmt$(Math.abs(savings))}</div>
-        <div className="pwy-savings-lbl">
-          {savings >= 0
-            ? <>saved on net cost vs. 4 years straight at <b>{univ.short}</b></>
-            : <>more expensive than 4 years straight at <b>{univ.short}</b></>}
-        </div>
-        <div className="pwy-savings-sub mono">{fmt$Full(monthlyPay)}/mo vs. {fmt$Full(directMonthlyPay)}/mo direct</div>
-      </div>
-
-      <div id="pwy-cost-breakdown" className="pwy-cost-table">
-        <div className="pwy-cost-head">
-          <div className="pwy-col-lbl"></div>
-          <div className="pwy-col-hd">{cc.short}<br/><span className="pwy-col-sub">2 yrs</span></div>
-          <div className="pwy-col-hd">{univ.short}<br/><span className="pwy-col-sub">2 yrs</span></div>
-          <div className="pwy-col-hd">2+2 Total</div>
-          <div className="pwy-col-hd pwy-direct-col">{univ.short} direct<br/><span className="pwy-col-sub">4 yrs</span></div>
-        </div>
-        {costRows.map((row, i) => (
-          <div key={i} className={"pwy-cost-row" + (row.bold ? " bold" : "")}>
-            <div className="pwy-col-lbl">{row.lbl}</div>
-            <div className={"pwy-col-val mono" + (row.neg ? " pos" : "")}>
-              {row.cc != null ? fmt$(row.cc) : "—"}
-            </div>
-            <div className={"pwy-col-val mono" + (row.neg ? " pos" : "")}>
-              {row.univ != null ? fmt$(row.univ) : "—"}
-            </div>
-            <div className="pwy-col-val mono">
-              {row.total != null ? fmt$(row.total)
-               : row.cc != null ? fmt$(row.cc + row.univ) : "—"}
-            </div>
-            <div className="pwy-col-val mono pwy-direct-col">
-              {row.directTotal != null ? fmt$(row.directTotal)
-               : row.direct != null ? fmt$(row.direct) : "—"}
-            </div>
+      <div id="pwy-cost-breakdown" hidden={!open}>
+        <div className={"pwy-savings-banner" + (savings >= 0 ? "" : " over")}>
+          <div className="pwy-savings-num mono">{fmt$(Math.abs(savings))}</div>
+          <div className="pwy-savings-lbl">
+            {savings >= 0
+              ? <>saved on net cost vs. 4 years straight at <b>{univ.short}</b></>
+              : <>more expensive than 4 years straight at <b>{univ.short}</b></>}
           </div>
-        ))}
+          <div className="pwy-savings-sub mono">{fmt$Full(monthlyPay)}/mo vs. {fmt$Full(directMonthlyPay)}/mo direct</div>
+        </div>
+
+        <div className="pwy-cost-table">
+          <div className="pwy-cost-head">
+            <div className="pwy-col-lbl"></div>
+            <div className="pwy-col-hd">{cc.short}<br/><span className="pwy-col-sub">2 yrs</span></div>
+            <div className="pwy-col-hd">{univ.short}<br/><span className="pwy-col-sub">2 yrs</span></div>
+            <div className="pwy-col-hd">2+2 Total</div>
+            <div className="pwy-col-hd pwy-direct-col">{univ.short} direct<br/><span className="pwy-col-sub">4 yrs</span></div>
+          </div>
+          {costRows.map((row, i) => (
+            <div key={i} className={"pwy-cost-row" + (row.bold ? " bold" : "")}>
+              <div className="pwy-col-lbl">{row.lbl}</div>
+              <div className={"pwy-col-val mono" + (row.neg ? " pos" : "")}>
+                {row.cc != null ? fmt$(row.cc) : "—"}
+              </div>
+              <div className={"pwy-col-val mono" + (row.neg ? " pos" : "")}>
+                {row.univ != null ? fmt$(row.univ) : "—"}
+              </div>
+              <div className="pwy-col-val mono">
+                {row.total != null ? fmt$(row.total)
+                 : row.cc != null ? fmt$(row.cc + row.univ) : "—"}
+              </div>
+              <div className="pwy-col-val mono pwy-direct-col">
+                {row.directTotal != null ? fmt$(row.directTotal)
+                 : row.direct != null ? fmt$(row.direct) : "—"}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-      </>}
 
     </div>
   );
