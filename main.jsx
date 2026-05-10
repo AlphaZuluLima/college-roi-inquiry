@@ -83,13 +83,16 @@ function App() {
       if (sch) {
         const isTwoYr = ["Public 2-yr", "Trade"].includes(sch.type);
         const prog = getProgram(s.programId);
-        if (isTwoYr !== (prog?.typical_years === 2)) {
+        const typeOk    = isTwoYr === (prog?.typical_years === 2);
+        const offeredOk = !sch.offered || sch.offered.includes(s.programId);
+        if (!typeOk || !offeredOk) {
           const allPrograms = [...D.PROGRAMS, ...customPrograms];
           const fallback = allPrograms.find(p =>
             (isTwoYr ? p.typical_years === 2 : p.typical_years !== 2) &&
             (!sch.offered || sch.offered.includes(p.id))
           );
           if (fallback) { next.programId = fallback.id; next.years = fallback.typical_years; }
+          else next.programId = null;
         }
       }
     }

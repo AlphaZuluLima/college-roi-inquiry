@@ -1,6 +1,5 @@
 // app.jsx — Input components: Combobox, Info, HeroStat, InputsPanel.
 const { useState, useMemo, useEffect, useRef } = React;
-const { fmt$, fmt$Full, fmtPct, computeROI, fetchUnknownEntity } = window.ROI_CALC;
 const D = window.ROI_DATA;
 
 // Aid for a given income bracket index (0-4), falling back to avg_aid when no data.
@@ -75,17 +74,18 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
 
   const selected = items.find(x => x.id === value);
   const filt = useMemo(() => {
-    const limit = iconType === "program" ? Infinity : 50;
     let pool = items;
     if (iconType === "school" && typeFilter) pool = pool.filter(x => x.type === typeFilter);
     if (iconType === "school" && stateFilter) pool = pool.filter(x => schoolState(x) === stateFilter);
-    if (!q) return pool.slice(0, limit);
     const Q = q.toLowerCase();
-    return pool.filter(x =>
-      x[displayKey]?.toLowerCase().includes(Q) ||
-      (x.short || "").toLowerCase().includes(Q) ||
-      (x.group || "").toLowerCase().includes(Q)
-    ).slice(0, limit);
+    const matched = q
+      ? pool.filter(x =>
+          x[displayKey]?.toLowerCase().includes(Q) ||
+          (x.short || "").toLowerCase().includes(Q) ||
+          (x.group || "").toLowerCase().includes(Q)
+        )
+      : pool;
+    return iconType === "program" ? matched : matched.slice(0, 50);
   }, [q, items, displayKey, iconType, typeFilter, stateFilter]);
 
   const grouped = useMemo(() => {
@@ -95,21 +95,25 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
     return g;
   }, [filt, iconType]);
 
+  const listboxId = useRef(`cb-list-${Math.random().toString(36).slice(2)}`);
+
   return (
     <div className="cb" ref={ref}>
-      <button className={"cb-trigger" + (open ? " open" : "")} onClick={() => setOpen(o => !o)}>
+      <button type="button" role="combobox" aria-expanded={open} aria-haspopup="listbox"
+              aria-controls={open ? listboxId.current : undefined}
+              className={"cb-trigger" + (open ? " open" : "")} onClick={() => setOpen(o => !o)}>
         <span className="cb-icon">{iconType === "school" ? "◇" : "◊"}</span>
         <span className="cb-text">{selected ? selected[displayKey] : <em>{placeholder}</em>}</span>
-        <span className="cb-caret">▾</span>
+        <span className="cb-caret" aria-hidden="true">▾</span>
       </button>
       {open && (
         <div className="cb-pop">
           {iconType === "school" && (
             <div className="cb-type-filters">
-              <button className={"cb-type-btn" + (!typeFilter ? " on" : "")}
+              <button type="button" className={"cb-type-btn" + (!typeFilter ? " on" : "")}
                       onClick={() => setTypeFilter(null)}>All</button>
               {SCHOOL_TYPES.map(t => (
-                <button key={t} className={"cb-type-btn" + (typeFilter === t ? " on" : "")}
+                <button type="button" key={t} className={"cb-type-btn" + (typeFilter === t ? " on" : "")}
                         onClick={() => setTypeFilter(f => f === t ? null : t)}>
                   {t}
                 </button>
@@ -127,13 +131,14 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
               placeholder={iconType === "school" ? "Search school or type any college…" : "Search program or type a major…"}
             />
           </div>
-          <div className="cb-list">
+          <div id={listboxId.current} className="cb-list" role="listbox">
             {grouped ? (
               Object.entries(grouped).map(([g, lst]) => (
                 <div key={g}>
                   <div className="cb-group">{g}</div>
                   {lst.map(x => (
-                    <button key={x.id} className={"cb-item" + (x.id === value ? " sel" : "")}
+                    <button type="button" key={x.id} role="option" aria-selected={x.id === value}
+                            className={"cb-item" + (x.id === value ? " sel" : "")}
                             onClick={() => { onChange(x.id); setOpen(false); setQ(""); }}>
                       <span className="cb-item-name">{x[displayKey]}</span>
                       {x.typical_years && <span className="badge-yrs">{x.typical_years}yr</span>}
@@ -144,7 +149,8 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
               ))
             ) : (
               filt.map(x => (
-                <button key={x.id} className={"cb-item" + (x.id === value ? " sel" : "")}
+                <button type="button" key={x.id} role="option" aria-selected={x.id === value}
+                        className={"cb-item" + (x.id === value ? " sel" : "")}
                         onClick={() => { onChange(x.id); setOpen(false); setQ(""); }}>
                   <span className="cb-item-name">{x[displayKey]}</span>
                   <span className="cb-item-meta">
@@ -155,7 +161,8 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
               ))
             )}
             {q && onCustom && filt.length < 5 && (
-              <button className="cb-item cb-custom" onClick={() => { onCustom(q); setOpen(false); setQ(""); }}>
+              <button type="button" className="cb-item cb-custom"
+                      onClick={() => { onCustom(q); setOpen(false); setQ(""); }}>
                 <span className="cb-item-name"><b>+ Use "{q}"</b></span>
                 <span className="cb-item-meta">AI estimate</span>
               </button>
@@ -171,10 +178,11 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
 function Info({ label, source, detail }) {
   const [open, setOpen] = useState(false);
   const isObj = source && typeof source === "object";
+  const ariaLabel = typeof label === "string" ? `More info about ${label}` : "More info";
   return (
-    <span className="info-wrap">
-      <button className="info-btn"
-              onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}
+    <span className="info-wrap"
+          onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button type="button" className="info-btn" aria-label={ariaLabel}
               onClick={() => setOpen(o => !o)}>
         <svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.6" fill="none" stroke="currentColor" strokeWidth="0.9"/><text x="5.5" y="8.2" textAnchor="middle" fontSize="7" fontFamily="serif" fontStyle="italic">i</text></svg>
       </button>
@@ -288,7 +296,7 @@ function Segment({ value, onChange, options }) {
   return (
     <div className="seg">
       {options.map(([v, l]) => (
-        <button key={v} className={"seg-opt" + (v === value ? " on" : "")}
+        <button type="button" key={v} className={"seg-opt" + (v === value ? " on" : "")}
                 onClick={() => onChange(v)}>{l}</button>
       ))}
     </div>
@@ -302,7 +310,10 @@ function NumInput({ value, onChange, prefix, suffix, step = 1, decimals = 0, sub
       <div className="numinp">
         {prefix && <span className="numinp-pre">{prefix}</span>}
         <input type="number" value={value} step={step}
-               onChange={(e) => onChange(parseFloat(e.target.value) || 0)} />
+               onChange={(e) => {
+                 const raw = e.target.value;
+                 onChange(raw === "" ? "" : Number(raw));
+               }} />
         {suffix && <span className="numinp-suf">{suffix}</span>}
       </div>
     </div>
