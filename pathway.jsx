@@ -1,6 +1,6 @@
 // pathway.jsx — 2+2 transfer path inputs and results
 const { useState, useMemo } = React;
-const { fmt$, fmt$Full, fmtPct } = window.ROI_CALC;
+const { fmt$, fmt$Full } = window.ROI_CALC;
 const D = window.ROI_DATA;
 
 const FOUR_YR_TYPES = new Set(["Public 4-yr", "Private 4-yr", "Liberal Arts"]);
@@ -8,12 +8,25 @@ const CC_TYPES      = new Set(["Public 2-yr"]);
 
 function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeBracket, onIncomeBracketChange }) {
   const [showAll, setShowAll] = useState(false);
-  const allSchools  = [...D.SCHOOLS, ...customSchools];
-  const ccSchools   = allSchools.filter(s => CC_TYPES.has(s.type));
-  const all4yr      = allSchools.filter(s => FOUR_YR_TYPES.has(s.type));
 
-  const cc = allSchools.find(s => s.id === inputs.ccId);
-  const ccState = window.schoolState(cc);
+  const allSchools = useMemo(
+    () => [...D.SCHOOLS, ...customSchools],
+    [customSchools]
+  );
+  const ccSchools = useMemo(
+    () => allSchools.filter(s => CC_TYPES.has(s.type)),
+    [allSchools]
+  );
+  const all4yr = useMemo(
+    () => allSchools.filter(s => FOUR_YR_TYPES.has(s.type)),
+    [allSchools]
+  );
+
+  const cc = useMemo(
+    () => allSchools.find(s => s.id === inputs.ccId),
+    [allSchools, inputs.ccId]
+  );
+  const ccState    = window.schoolState(cc);
   const hasPartners = cc?.transfer_partners?.length > 0;
 
   const univSchools = useMemo(() => {
@@ -30,12 +43,17 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
     return null;
   }, [showAll, cc, hasPartners, ccState, univSchools.length]);
 
-  const univ = allSchools.find(s => s.id === inputs.univId);
-  const programs = [...D.PROGRAMS, ...customPrograms].filter(p => {
-    if (p.typical_years === 2) return false;
-    if (univ?.offered) return univ.offered.includes(p.id);
-    return true;
-  });
+  const univ = useMemo(
+    () => allSchools.find(s => s.id === inputs.univId),
+    [allSchools, inputs.univId]
+  );
+  const programs = useMemo(() => {
+    return [...D.PROGRAMS, ...customPrograms].filter(p => {
+      if (p.typical_years === 2) return false;
+      if (univ?.offered) return univ.offered.includes(p.id);
+      return true;
+    });
+  }, [customPrograms, univ]);
 
   return (
     <div className="inputs pwy-inputs">
@@ -46,7 +64,7 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
           <div className="ipt-grp ipt-school">
             <label className="ipt-lbl">Community college</label>
             <Combobox items={ccSchools} value={inputs.ccId}
-                      onChange={v => { setInput("ccId", v); setShowAll(false); }}
+                      onChange={v => { setInput("ccId", v); setInput("univId", null); setInput("programId", null); setShowAll(false); }}
                       placeholder="Choose a CC…" iconType="school" />
           </div>
           <div className="ipt-grid">
@@ -82,14 +100,14 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
                 <span className="ipt-lbl">Transfer school</span>
                 <span className="pwy-filter-note">
                   {filterLabel ? (
-                    <>{filterLabel} · <button className="pwy-filter-toggle" onClick={() => setShowAll(true)}>show all</button></>
+                    <>{filterLabel} · <button type="button" className="pwy-filter-toggle" onClick={() => setShowAll(true)}>show all</button></>
                   ) : cc && (hasPartners || ccState) ? (
-                    <>All schools · <button className="pwy-filter-toggle" onClick={() => setShowAll(false)}>filter</button></>
+                    <>All schools · <button type="button" className="pwy-filter-toggle" onClick={() => setShowAll(false)}>filter</button></>
                   ) : null}
                 </span>
               </div>
               <Combobox items={univSchools} value={inputs.univId}
-                        onChange={v => setInput("univId", v)}
+                        onChange={v => { setInput("univId", v); setInput("programId", null); }}
                         placeholder="Choose a university…" iconType="school" />
             </div>
             <div className="ipt-grp ipt-program">
@@ -120,7 +138,7 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
 
       </div>
 
-      <div className="ipt-grid" style={{marginTop:"14px", borderTop:"1px solid var(--rule)", paddingTop:"14px"}}>
+      <div className="ipt-grid pwy-finance-inputs">
         <Field label="Family income">
           <IncomeSel value={incomeBracket} onChange={onIncomeBracketChange} />
         </Field>
@@ -138,8 +156,9 @@ function PathwayPanel({ inputs, setInput, customSchools, customPrograms, incomeB
 }
 
 function PathwaySummary({ result }) {
-  if (!result) return null;
   const [open, setOpen] = useState(false);
+  if (!result) return null;
+  if (!result.cc || !result.univ || !result.ccYearly || !result.univYearly) return null;
   const {
     cc, univ,
     ccYearly, univYearly, ccNetCost, univNetCost,
@@ -163,9 +182,10 @@ function PathwaySummary({ result }) {
   return (
     <div className="pwy-results">
 
-      <button className="pwy-toggle" onClick={() => setOpen(o => !o)}>
+      <button type="button" className="pwy-toggle" aria-expanded={open} aria-controls="pwy-cost-breakdown"
+              onClick={() => setOpen(o => !o)}>
         <span className="pwy-toggle-label">2+2 Cost Breakdown</span>
-        <span className="pwy-toggle-caret">{open ? "▴" : "▾"}</span>
+        <span className="pwy-toggle-caret" aria-hidden="true">{open ? "▴" : "▾"}</span>
       </button>
 
       {open && <>
@@ -179,7 +199,7 @@ function PathwaySummary({ result }) {
         <div className="pwy-savings-sub mono">{fmt$Full(monthlyPay)}/mo vs. {fmt$Full(directMonthlyPay)}/mo direct</div>
       </div>
 
-      <div className="pwy-cost-table">
+      <div id="pwy-cost-breakdown" className="pwy-cost-table">
         <div className="pwy-cost-head">
           <div className="pwy-col-lbl"></div>
           <div className="pwy-col-hd">{cc.short}<br/><span className="pwy-col-sub">2 yrs</span></div>
