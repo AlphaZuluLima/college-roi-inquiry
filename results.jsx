@@ -52,22 +52,22 @@ function HeroRow({ result }) {
         big
       />
       <HeroStat
-        label="Total cost incl. interest"
+        label="Net cost incl. interest"
         value={fmt$(r.totalAllIn)}
-        sublabel={`Interest accrued: ${fmt$(r.totalInterest)}`}
+        sublabel={`Principal: ${fmt$(r.principal)} · Interest: ${fmt$(r.totalInterest)}`}
         source={D.SOURCES.loanRate}
         big
       />
       <HeroStat
         label="Monthly loan payment"
         value={fmt$Full(r.monthlyPay)}
-        sublabel={`${(r.debtBurden * 100).toFixed(0)}% of starting monthly income`}
+        sublabel={`${(r.debtBurden * 100).toFixed(0)}% of expected yr-1 income (emp.-adj.)`}
         big mono
       />
       <HeroStat
         label="Median starting salary"
         value={fmt$(r.salStart)}
-        sublabel={`School/program adj. ×${r.salaryMult.toFixed(2)}`}
+        sublabel={`School/program/scenario adj. ×${r.salaryMult.toFixed(2)}`}
         source={D.SOURCES.salary}
         big
       />
@@ -144,7 +144,7 @@ function ResultsView({ result }) {
       <Section
         kicker="Section 02"
         title="Where the money goes"
-        dek={`Total all-in cost is ${fmt$Full(r.totalAllIn)} including interest. ${r.totalAid > 0 ? `Of the ${fmt$Full(r.yearly.gross * r.yearsCount)} sticker price, ${fmt$Full(r.totalAid)} comes back as aid.` : `Sticker price comes to ${fmt$Full(r.yearly.gross * r.yearsCount)}.`}`}
+        dek={`Your net cost with interest is ${fmt$Full(r.totalAllIn)} — principal ${fmt$Full(r.principal)} plus ${fmt$Full(r.totalInterest)} in interest. ${r.totalAid > 0 ? `Of the ${fmt$Full(r.yearly.gross * r.yearsCount)} sticker price, ${fmt$Full(r.totalAid)} comes back as aid.` : `Sticker price comes to ${fmt$Full(r.yearly.gross * r.yearsCount)}.`}`}
       >
         <div className="cost-row">
           <CostStack result={r} width={760} height={120} />

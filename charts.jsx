@@ -322,7 +322,7 @@ function CostStack({ result, height = 110, width = 760 }) {
 
   return (
     <svg viewBox={`0 0 ${width} ${height + 22}`} className="chart-svg stack">
-      <text x={0} y={16} className="stack-h">Total cost over {r.yearsCount} years</text>
+      <text x={0} y={16} className="stack-h">Gross cost over {r.yearsCount} years (before aid)</text>
       <text x={W} y={16} textAnchor="end" className="stack-h bold">{ROI_CALC.fmt$Full(total)}</text>
       <g transform={`translate(${m.l},${m.t})`}>
         {segs.map((s, i) => (

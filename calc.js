@@ -79,7 +79,7 @@
     const monthlyPay = monthlyPayment(principal, opts.loanRate, opts.loanTerm);
     const totalInterest = totalLoanInterest(principal, opts.loanRate, opts.loanTerm);
     const totalCostWithInterest = principal + totalInterest;
-    const totalAllIn = totalAid + principal + totalInterest;
+    const totalAllIn = principal + totalInterest;  // what the student actually pays (net cost + interest)
 
     const sal = projectedSalary(school, program, { scenarioMult });
     const scorecard = (window.ROI_EARNINGS || {})[school.id]?.[program.id];
@@ -193,7 +193,7 @@
     const monthlyPay  = monthlyPayment(principal, opts.loanRate, opts.loanTerm);
     const totalInterest = totalLoanInterest(principal, opts.loanRate, opts.loanTerm);
     const totalAid    = (ccYearly.aid + univYearly.aid) * 2;
-    const totalAllIn  = totalAid + principal + totalInterest;
+    const totalAllIn  = principal + totalInterest;
 
     // Direct 4-year at transfer school for comparison (same residency/living/aid as univ phase)
     const directYearly      = univYearly;
