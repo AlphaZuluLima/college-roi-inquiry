@@ -181,10 +181,21 @@ function Info({ label, source, detail }) {
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned]   = useState(false);
   const open = hovered || pinned;
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!pinned) return;
+    const handler = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setPinned(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [pinned]);
+
   const isObj = source && typeof source === "object";
   const ariaLabel = typeof label === "string" ? `More info about ${label}` : "More info";
   return (
-    <span className="info-wrap"
+    <span className="info-wrap" ref={wrapRef}
           onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       <button type="button" className="info-btn" aria-label={ariaLabel}
               onClick={() => setPinned(o => !o)}>

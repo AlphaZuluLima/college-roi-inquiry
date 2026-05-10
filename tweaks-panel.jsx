@@ -13,7 +13,7 @@ function TweaksPanel({ children }) {
   const [collapsed, setCollapsed] = tUseState(false);
   return (
     <div className={"tweaks-panel" + (collapsed ? " collapsed" : "")}>
-      <button className="tweaks-toggle" onClick={() => setCollapsed(c => !c)}>
+      <button type="button" className="tweaks-toggle" onClick={() => setCollapsed(c => !c)}>
         <span className="tweaks-toggle-icon">{collapsed ? "⊕" : "⊗"}</span>
         <span className="tweaks-toggle-label">{collapsed ? "" : "Tweaks"}</span>
       </button>
@@ -37,6 +37,7 @@ function TweakColor({ label, value, options, onChange }) {
       <div className="tweak-colors">
         {options.map(c => (
           <button
+            type="button"
             key={c}
             className={"tweak-swatch" + (c === value ? " on" : "")}
             style={{ background: c }}
@@ -56,6 +57,7 @@ function TweakRadio({ label, value, options, onChange }) {
       <div className="tweak-seg">
         {options.map(([v, l]) => (
           <button
+            type="button"
             key={v}
             className={"tweak-seg-opt" + (v === value ? " on" : "")}
             onClick={() => onChange(v)}

@@ -3,9 +3,9 @@ const { useState: fUseState, useEffect: fUseEffect } = React;
 const D = window.ROI_DATA;
 
 function FreshnessBadge() {
-  const [key, setKey] = fUseState(window.ROI_FRESHNESS.getApiKey());
+  const [key, setKey] = fUseState(window.ROI_FRESHNESS?.getApiKey?.() ?? "");
   const [status, setStatus] = fUseState(null);
-  const [showKeyInput, setShowKeyInput] = fUseState(!window.ROI_FRESHNESS.getApiKey());
+  const [showKeyInput, setShowKeyInput] = fUseState(!window.ROI_FRESHNESS?.getApiKey?.());
 
   const snap = D.SNAPSHOT_DATE;
   const snapDate = new Date(snap);
@@ -65,14 +65,14 @@ function FreshnessBadge() {
               value={key}
               onChange={(e) => setKey(e.target.value)}
             />
-            <button className="fr-btn" onClick={saveKey} disabled={!key}>Save</button>
+            <button type="button" className="fr-btn" onClick={saveKey} disabled={!key}>Save</button>
           </>
         ) : (
           <>
-            <button className="fr-btn" onClick={runCheck} disabled={status === "checking"}>
+            <button type="button" className="fr-btn" onClick={runCheck} disabled={status === "checking"}>
               {status === "checking" ? "Checking…" : "Check freshness"}
             </button>
-            <button className="fr-btn" onClick={clearKey} title="Clear API key">⊘</button>
+            <button type="button" className="fr-btn" onClick={clearKey} title="Clear API key">⊘</button>
           </>
         )}
       </div>

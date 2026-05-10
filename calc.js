@@ -347,7 +347,7 @@ salary_start = median earnings 1 yr post-grad, salary_mid = ~10 yr post-grad. gr
   }
 
   const fmt$ = (n, opts = {}) => {
-    if (n == null || isNaN(n)) return "—";
+    if (n == null || !Number.isFinite(n)) return "—";
     const abs = Math.abs(n);
     if (opts.compact !== false && abs >= 1e6) return (n < 0 ? "−" : "") + "$" + (abs / 1e6).toFixed(abs < 1e7 ? 2 : 1) + "M";
     if (opts.compact !== false && abs >= 1e4) return (n < 0 ? "−" : "") + "$" + Math.round(abs / 1e3) + "K";
