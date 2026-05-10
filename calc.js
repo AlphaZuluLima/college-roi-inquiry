@@ -4,10 +4,16 @@
 (function () {
   const D = window.ROI_DATA;
 
+  const HORIZON_YEARS = 50;
+
+  function clamp(n, lo, hi) { return Math.min(hi, Math.max(lo, n)); }
+
   function monthlyPayment(principal, annualRate, termYears) {
     if (principal <= 0) return 0;
-    const r = annualRate / 12;
-    const n = termYears * 12;
+    const n = Number(termYears) * 12;
+    if (!Number.isFinite(n) || n <= 0) return 0;
+    const r = Number(annualRate) / 12;
+    if (!Number.isFinite(r) || r < 0) return 0;
     if (r === 0) return principal / n;
     return (principal * r) / (1 - Math.pow(1 + r, -n));
   }
@@ -75,22 +81,24 @@
     const totalAid = yearly.aid * yearsCount;
     const netCost = yearly.net * yearsCount;
 
+    // Simplified model: treats the full net cost as a single lump loan taken at graduation.
+    // In practice, students borrow incrementally and subsidized loans defer interest while in school.
     const principal = netCost;
     const monthlyPay = monthlyPayment(principal, opts.loanRate, opts.loanTerm);
     const totalInterest = totalLoanInterest(principal, opts.loanRate, opts.loanTerm);
-    const totalCostWithInterest = principal + totalInterest;
-    const totalAllIn = principal + totalInterest;  // what the student actually pays (net cost + interest)
+    const totalAllIn = principal + totalInterest;
 
     const sal = projectedSalary(school, program, { scenarioMult });
     const scorecard = (window.ROI_EARNINGS || {})[school.id]?.[program.id];
     const salStart = scorecard?.sal2yr ? scorecard.sal2yr * scenarioMult : sal.start;
     const salMid = sal.mid;
-    const empRate = Math.min(0.99, school.employ_6mo * (program.employ_field) ** 0.7 * scenarioMult);
+    const rawEmpRate = school.employ_6mo * Math.pow(program.employ_field, 0.7) * scenarioMult;
+    const empRate = Number.isFinite(rawEmpRate) ? clamp(rawEmpRate, 0, 0.99) : 0;
     const expectedAnnual = (yr) => salaryAtYear(salStart, salMid, opts.salaryGrowth ?? program.growth, yr) * empRate;
 
     const hsAnnual = (yr) => salaryAtYear(D.HS_GRAD_SALARY_START, D.HS_GRAD_SALARY_MID, D.HS_GRAD_GROWTH, yr);
 
-    const horizon = 50;
+    const horizon = HORIZON_YEARS;
     const series = [];
     let cumDegreeNet = 0;
     let cumHsNet = 0;
@@ -163,7 +171,7 @@
       school, program,
       yearly, yearsCount,
       totalSticker, totalAid, netCost,
-      principal, monthlyPay, totalInterest, totalCostWithInterest, totalAllIn,
+      principal, monthlyPay, totalInterest, totalAllIn,
       loanTerm: opts.loanTerm,
       salStart, salMid, empRate, salaryMult: sal.mult,
       series,
@@ -207,7 +215,8 @@
     const scorecard2p2 = (window.ROI_EARNINGS || {})[univ.id]?.[program.id];
     const salStart = scorecard2p2?.sal2yr ? scorecard2p2.sal2yr * scenarioMult : sal.start;
     const salMid   = sal.mid;
-    const empRate  = Math.min(0.99, univ.employ_6mo * (program.employ_field) ** 0.7 * scenarioMult);
+    const rawEmpRate2 = univ.employ_6mo * Math.pow(program.employ_field, 0.7) * scenarioMult;
+    const empRate  = Number.isFinite(rawEmpRate2) ? clamp(rawEmpRate2, 0, 0.99) : 0;
     const expectedAnnual = (yr) => salaryAtYear(salStart, salMid, opts.salaryGrowth ?? program.growth, yr) * empRate;
 
     const hsAnnual = (yr) => salaryAtYear(D.HS_GRAD_SALARY_START, D.HS_GRAD_SALARY_MID, D.HS_GRAD_GROWTH, yr);
@@ -216,7 +225,7 @@
     let cumDegreeNet = 0, cumHsNet = 0, cumInvestAlt = 0;
     let breakEvenYear = null, beatHsYear = null, workYear = 0;
 
-    for (let y = 0; y < 50; y++) {
+    for (let y = 0; y < HORIZON_YEARS; y++) {
       let degreeIncome = 0, degreeExpense = 0;
       const hsIncome = hsAnnual(y);
 
@@ -247,14 +256,14 @@
       });
     }
 
-    const lifetimeDegree        = series[49].degreeNet;
-    const lifetimeHs            = series[49].hsNet;
-    const lifetimeInvest        = series[49].investAlt;
+    const last                  = series[series.length - 1];
+    const lifetimeDegree        = last.degreeNet;
+    const lifetimeHs            = last.hsNet;
+    const lifetimeInvest        = last.investAlt;
     const lifetimeEarningsGross = series.reduce((a, s) => a + s.degreeIncome, 0);
     const netRoi                = lifetimeDegree - lifetimeHs;
     const totalNetCost          = ccNetCost + univNetCost;
     const totalSticker          = ccYearly.gross * 2 + univYearly.gross * 2;
-    const totalCostWithInterest = principal + totalInterest;
     const netCost               = totalNetCost;
     const yearsCount            = 4;
 
@@ -289,7 +298,7 @@
       directNetCost, directPrincipal, directMonthlyPay, directTotalInterest, savings,
       // computeROI-compatible shape (consumed by ResultsView + all charts)
       school, program, yearly, yearsCount,
-      totalSticker, totalAid, netCost, totalCostWithInterest, totalAllIn,
+      totalSticker, totalAid, netCost, totalAllIn,
       principal, monthlyPay, totalInterest,
       loanTerm: opts.loanTerm,
       salStart, salMid, empRate, salaryMult: sal.mult,
@@ -308,6 +317,10 @@ Use realistic 2024 figures. If unsure of in-state vs out-of-state, set them equa
 {"id":"slug","name":"Display Name","group":"STEM|Health|Business|Education|Arts & Humanities|Social Sci.|Trade","salary_start":number_USD,"salary_mid":number_USD,"growth":number_decimal,"employ_field":number_0_to_1,"_estimated":true}
 salary_start = median earnings 1 yr post-grad, salary_mid = ~10 yr post-grad. growth = annual real wage growth (e.g. 0.025). No prose, just JSON.`;
 
+    if (!window.claude?.complete) {
+      console.warn("AI fallback unavailable: window.claude not found");
+      return null;
+    }
     try {
       const text = await window.claude.complete(prompt);
       const cleaned = text.trim().replace(/^```(?:json)?\s*\n?|\n?```\s*$/g, "").trim();
