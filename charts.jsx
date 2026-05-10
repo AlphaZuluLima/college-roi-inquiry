@@ -1,5 +1,5 @@
 // charts.jsx — Custom SVG charts in editorial-data-journalism style.
-const { useMemo, useRef, useState, useEffect } = React;
+const { useRef, useState } = React;
 
 const C = {
   ink: "var(--ink)",
@@ -16,6 +16,7 @@ const C = {
 };
 
 function EarningsChart({ result, height = 360, width = 760 }) {
+  if (!result?.series?.length) return null;
   const m = { l: 70, r: 24, t: 24, b: 44 };
   const W = width - m.l - m.r;
   const H = height - m.t - m.b;
@@ -26,14 +27,16 @@ function EarningsChart({ result, height = 360, width = 760 }) {
   const yMin = Math.min(0, ...allVals);
   const yMax = Math.max(...allVals);
   const yPad = (yMax - yMin) * 0.05;
+  const yDomainMin = yMin - yPad;
+  const yDomainMax = yMax + yPad;
 
   const x = (age) => ((age - xMin) / (xMax - xMin)) * W;
-  const y = (v) => H - ((v - yMin) / (yMax - yMin + 2 * yPad)) * H;
+  const y = (v) => H - ((v - yDomainMin) / (yDomainMax - yDomainMin || 1)) * H;
 
   const path = (key) =>
     series.map((s, i) => `${i === 0 ? "M" : "L"} ${x(s.age).toFixed(1)} ${y(s[key]).toFixed(1)}`).join(" ");
 
-  const yTicks = niceTicks(yMin, yMax, 5);
+  const yTicks = niceTicks(yDomainMin, yDomainMax, 5);
   const xTicks = [22, 30, 40, 50, 60, 68];
 
   const [hover, setHover] = useState(null);
@@ -54,9 +57,12 @@ function EarningsChart({ result, height = 360, width = 760 }) {
         ref={svgRef}
         viewBox={`0 0 ${width} ${height}`}
         className="chart-svg"
-        onMouseMove={onMove}
-        onMouseLeave={() => setHover(null)}
+        role="img"
+        aria-label="Lifetime earnings comparison chart"
+        onPointerMove={onMove}
+        onPointerLeave={() => setHover(null)}
       >
+        <title>Lifetime earnings comparison chart</title>
         <g transform={`translate(${m.l},${m.t})`}>
           {yTicks.map((t, i) => (
             <g key={i}>
@@ -119,7 +125,7 @@ function EarningsChart({ result, height = 360, width = 760 }) {
       </svg>
       {hover != null && (
         <div className="chart-tip" style={{
-          left: `${((m.l + (hover * W / (series.length - 1))) / width * 100)}%`,
+          left: `${((m.l + x(series[hover].age)) / width * 100)}%`,
         }}>
           <div className="tip-h">Age {series[hover].age}</div>
           <div className="tip-row"><span className="dot" style={{ background: "var(--accent)" }} />Degree<b>{fmtAxis(series[hover].degreeNet)}</b></div>
@@ -200,10 +206,10 @@ function Sankey({ result, height = 280, width = 760 }) {
       midYAid += toAid;
       leftYAccum[idx] += toAid;
     }
-    if (toPrin > 0.5) {
-      const prinIdx = midNodes.findIndex(n => n.label === "Borrowed (principal)");
+    const prinNode = midNodes.find(n => n.label === "Borrowed (principal)");
+    if (prinNode && toPrin > 0.5) {
       flows.push({ x1: c.x + 14, y1Top: leftYAccum[idx], y1Bot: leftYAccum[idx] + toPrin,
-                   x2: midNodes[prinIdx].x, y2Top: midYPrin, y2Bot: midYPrin + toPrin, color: c.color });
+                   x2: prinNode.x, y2Top: midYPrin, y2Bot: midYPrin + toPrin, color: c.color });
       midYPrin += toPrin;
       leftYAccum[idx] += toPrin;
     }
@@ -216,7 +222,9 @@ function Sankey({ result, height = 280, width = 760 }) {
   }
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="chart-svg sankey">
+    <svg viewBox={`0 0 ${width} ${height}`} className="chart-svg sankey"
+         role="img" aria-label="Cost breakdown flow diagram">
+      <title>Cost breakdown flow diagram</title>
       <g transform={`translate(${m.l},${m.t})`}>
         {flows.map((f, i) => (
           <path key={i}
@@ -261,7 +269,9 @@ function CompareBars({ result, height = 220, width = 600 }) {
   const W = width - m.l - m.r;
   const rowH = (height - m.t - m.b) / items.length;
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="chart-svg cmp">
+    <svg viewBox={`0 0 ${width} ${height}`} className="chart-svg cmp"
+         role="img" aria-label="Lifetime earnings comparison by path">
+      <title>Lifetime earnings comparison by path</title>
       <g transform={`translate(${m.l},${m.t})`}>
         {items.map((it, i) => {
           const w = (it.value / max) * W;
@@ -295,6 +305,7 @@ function CostStack({ result, height = 110, width = 760 }) {
   ];
   const positives = items.filter(i => i.value > 0);
   const total = positives.reduce((a, n) => a + n.value, 0);
+  if (total <= 0) return null;
   const m = { l: 0, r: 0, t: 36, b: 26 };
   const W = width;
   const barH = 28;
@@ -321,7 +332,9 @@ function CostStack({ result, height = 110, width = 760 }) {
   }
 
   return (
-    <svg viewBox={`0 0 ${width} ${height + 22}`} className="chart-svg stack">
+    <svg viewBox={`0 0 ${width} ${height + 22}`} className="chart-svg stack"
+         role="img" aria-label="Cost breakdown stacked bar">
+      <title>Cost breakdown stacked bar</title>
       <text x={0} y={16} className="stack-h">Gross cost over {r.yearsCount} years (before aid)</text>
       <text x={W} y={16} textAnchor="end" className="stack-h bold">{ROI_CALC.fmt$Full(total)}</text>
       <g transform={`translate(${m.l},${m.t})`}>
@@ -356,7 +369,7 @@ function Spark({ data, color = "var(--ink-2)", width = 110, height = 28 }) {
   const y = (v) => height - ((v - min) / (max - min || 1)) * height;
   const d = data.map((v, i) => `${i === 0 ? "M" : "L"} ${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
   return (
-    <svg width={width} height={height} className="spark">
+    <svg width={width} height={height} className="spark" aria-hidden="true">
       <path d={d} fill="none" stroke={color} strokeWidth={1.4} />
     </svg>
   );
