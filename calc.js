@@ -19,8 +19,10 @@
   }
 
   function totalLoanInterest(principal, annualRate, termYears) {
+    const n = Number(termYears) * 12;
+    if (principal <= 0 || !Number.isFinite(n) || n <= 0) return 0;
     const m = monthlyPayment(principal, annualRate, termYears);
-    return Math.max(0, m * termYears * 12 - principal);
+    return Math.max(0, m * n - principal);
   }
 
   function getSchool(id) { return D.SCHOOLS.find(s => s.id === id); }
@@ -34,10 +36,10 @@
   function annualCost(school, opts) {
     const tuition = opts.residency === "in" ? school.tuition_in : school.tuition_out;
     let rb = school.room_board;
-    if (opts.living === "with-parents") rb = opts.livingExpenses ?? 0;
+    if (opts.living === "with-parents") rb = Number(opts.livingExpenses) || 0;
     else if (opts.living === "off-campus") rb = Math.round(rb * 0.85);
-    const books = school.books;
-    const aid = opts.aid;
+    const books = Number(school.books) || 0;
+    const aid = Number(opts.aid) || 0;
     return {
       tuition,
       roomBoard: rb,
@@ -76,7 +78,7 @@
                        : 1.0;
 
     const yearly = annualCost(school, { residency: opts.residency, living: opts.living, aid: opts.aid, livingExpenses: opts.livingExpenses ?? 0 });
-    const yearsCount = opts.years;
+    const yearsCount = Math.max(1, Math.round(Number(opts.years) || 4));
     const totalSticker = yearly.gross * yearsCount;
     const totalAid = yearly.aid * yearsCount;
     const netCost = yearly.net * yearsCount;
@@ -162,7 +164,7 @@
     const debtBurden = monthlyPay / Math.max(1, monthlyIncomeYr1);
 
     let verdict;
-    if (netRoi > 800000 && (breakEvenYear ?? 99) - yearsCount <= 10) verdict = "strong";
+    if (netRoi > 800000 && (beatHsYear ?? 99) - yearsCount <= 10) verdict = "strong";
     else if (netRoi > 250000) verdict = "moderate";
     else if (netRoi > 0) verdict = "marginal";
     else verdict = "negative";
@@ -288,7 +290,7 @@
 
     const monthlyIncomeYr1 = expectedAnnual(0) / 12;
     const debtBurden = monthlyPay / Math.max(1, monthlyIncomeYr1);
-    const verdict = netRoi > 800000 && (breakEvenYear ?? 99) - 4 <= 10 ? "strong"
+    const verdict = netRoi > 800000 && (beatHsYear ?? 99) - 4 <= 10 ? "strong"
                   : netRoi > 250000 ? "moderate"
                   : netRoi > 0 ? "marginal" : "negative";
 
@@ -342,7 +344,7 @@ salary_start = median earnings 1 yr post-grad, salary_mid = ~10 yr post-grad. gr
     return (n < 0 ? "−" : "") + "$" + Math.round(abs).toLocaleString();
   };
   const fmt$Full = (n) => (n < 0 ? "−" : "") + "$" + Math.round(Math.abs(n)).toLocaleString();
-  const fmtPct = (n, digits=0) => (n * 100).toFixed(digits) + "%";
+  const fmtPct = (n, digits = 0) => Number.isFinite(Number(n)) ? (Number(n) * 100).toFixed(digits) + "%" : "—";
 
   window.ROI_CALC = {
     monthlyPayment, totalLoanInterest,
