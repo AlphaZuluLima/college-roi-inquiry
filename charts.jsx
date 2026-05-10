@@ -85,8 +85,8 @@ function EarningsChart({ result, height = 360, width = 760 }) {
           <path d={path("hsNet")} fill="none" stroke={C.hs} strokeWidth={1.6} />
           <path d={path("degreeNet")} fill="none" stroke={C.accent} strokeWidth={2.4} />
 
-          {result.principal > 0 && (() => {
-            const payoffAge = 18 + result.yearsCount + result.loanTerm;
+          {result.loanPaidOffAge != null && (() => {
+            const payoffAge = result.loanPaidOffAge;
             const payoffIdx = result.yearsCount + result.loanTerm;
             const payoffY = payoffIdx < result.series.length ? y(result.series[payoffIdx].degreeNet) : H;
             return (

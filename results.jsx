@@ -1,17 +1,18 @@
 // results.jsx — Results / verdict / charts section.
-const { useState: rUseState, useMemo: rUseMemo, useEffect: rUseEffect } = React;
+if (!window.ROI_CALC) throw new Error("ROI_CALC must load before results.jsx");
+if (!window.ROI_DATA) throw new Error("ROI_DATA must load before results.jsx");
 const { fmt$, fmt$Full, fmtPct } = window.ROI_CALC;
 const D = window.ROI_DATA;
 
 function VerdictCard({ result }) {
   const r = result;
   const v = r.verdict;
-  const txt = {
+  const txt = ({
     strong:   { kicker: "STRONG ROI", line: "This degree pays off many times over.", tone: "pos" },
     moderate: { kicker: "POSITIVE ROI", line: "Earnings comfortably exceed the cost.", tone: "pos" },
     marginal: { kicker: "MARGINAL ROI", line: "The math works out, but barely.", tone: "warn" },
     negative: { kicker: "NEGATIVE ROI", line: "The investment doesn't pay back over a working life.", tone: "neg" },
-  }[v];
+  })[v] || { kicker: "ROI UNKNOWN", line: "Not enough data to determine the payoff.", tone: "warn" };
   return (
     <div className={"verdict v-" + v}>
       <div className="verdict-mark">
@@ -26,14 +27,14 @@ function VerdictCard({ result }) {
           </div>
         </div>
         <div>
-          <div className="vg-lbl">Loan paid off</div>
+          <div className="vg-lbl">Est. loan payoff age</div>
           <div className="vg-num mono">
-            {r.principal > 0 ? `Age ${18 + r.yearsCount + r.loanTerm}` : "No loan"}
+            {r.loanPaidOffAge != null ? `Age ${r.loanPaidOffAge}` : "No loan"}
           </div>
         </div>
         <div>
           <div className="vg-lbl">Years of payments</div>
-          <div className="vg-num mono">{r.principal > 0 ? r.loanTerm : "—"}</div>
+          <div className="vg-num mono">{r.principal > 0 ? `${r.loanTerm} yrs` : "—"}</div>
         </div>
       </div>
     </div>
