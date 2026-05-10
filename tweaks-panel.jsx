@@ -77,7 +77,7 @@ function TweakSlider({ label, value, min, max, step, unit, onChange }) {
           type="range"
           min={min} max={max} step={step}
           value={value}
-          onChange={(e) => onChange(parseFloat(e.target.value))}
+          onChange={(e) => onChange(Number(e.target.value))}
           className="tweak-slider"
         />
         <span className="tweak-slider-val">{value.toFixed(step < 1 ? 1 : 0)}{unit}</span>

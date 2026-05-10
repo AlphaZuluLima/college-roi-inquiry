@@ -1,5 +1,6 @@
 // charts.jsx — Custom SVG charts in editorial-data-journalism style.
 const { useRef, useState } = React;
+const { fmt$, fmt$Full } = window.ROI_CALC;
 
 const C = {
   ink: "var(--ink)",
@@ -123,16 +124,20 @@ function EarningsChart({ result, height = 360, width = 760 }) {
           )}
         </g>
       </svg>
-      {hover != null && (
-        <div className="chart-tip" style={{
-          left: `${((m.l + x(series[hover].age)) / width * 100)}%`,
-        }}>
+      {hover != null && (() => {
+        const pct = (m.l + x(series[hover].age)) / width * 100;
+        const tipStyle = pct > 65
+          ? { right: `${(100 - pct).toFixed(1)}%`, left: "auto" }
+          : { left: `${pct.toFixed(1)}%` };
+        return (
+        <div className="chart-tip" style={tipStyle}>
           <div className="tip-h">Age {series[hover].age}</div>
           <div className="tip-row"><span className="dot" style={{ background: "var(--accent)" }} />Degree<b>{fmtAxis(series[hover].degreeNet)}</b></div>
           <div className="tip-row"><span className="dot" style={{ background: "var(--hs)" }} />HS only<b>{fmtAxis(series[hover].hsNet)}</b></div>
           <div className="tip-row"><span className="dot" style={{ background: "var(--alt)" }} />Invest alt.<b>{fmtAxis(series[hover].investAlt)}</b></div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
@@ -239,7 +244,7 @@ function Sankey({ result, height = 280, width = 760 }) {
                   textAnchor={n.x < width / 2 ? "end" : "start"}
                   className="sk-label">
               <tspan className="sk-name">{n.label}</tspan>
-              <tspan x={n.x < width / 2 ? n.x - 6 : n.x + n.w + 6} dy={13} className="sk-val">{ROI_CALC.fmt$(n.value)}</tspan>
+              <tspan x={n.x < width / 2 ? n.x - 6 : n.x + n.w + 6} dy={13} className="sk-val">{fmt$(n.value)}</tspan>
             </text>
           </g>
         ))}
@@ -284,7 +289,7 @@ function CompareBars({ result, height = 220, width = 600 }) {
               <rect x={0} y={y} width={Math.max(0, w)} height={rowH - 16}
                     fill={it.color} opacity={it.primary ? 1 : 0.7} />
               <text x={w + 6} y={y + 16} className={"cmp-val" + (it.primary ? " bold" : "")}>
-                {ROI_CALC.fmt$(it.value)}
+                {fmt$(it.value)}
               </text>
             </g>
           );
@@ -336,7 +341,7 @@ function CostStack({ result, height = 110, width = 760 }) {
          role="img" aria-label="Cost breakdown stacked bar">
       <title>Cost breakdown stacked bar</title>
       <text x={0} y={16} className="stack-h">Gross cost over {r.yearsCount} years (before aid)</text>
-      <text x={W} y={16} textAnchor="end" className="stack-h bold">{ROI_CALC.fmt$Full(total)}</text>
+      <text x={W} y={16} textAnchor="end" className="stack-h bold">{fmt$Full(total)}</text>
       <g transform={`translate(${m.l},${m.t})`}>
         {segs.map((s, i) => (
           <rect key={"r"+i} x={s.x} y={0} width={s.w} height={barH} fill={s.color} />
@@ -352,7 +357,7 @@ function CostStack({ result, height = 110, width = 760 }) {
                       stroke="var(--rule)" strokeWidth={0.8} />
               )}
               <text x={anchorX} y={labelY} className="stack-lbl">{s.label}</text>
-              <text x={anchorX} y={labelY + 12} className="stack-num">{ROI_CALC.fmt$(s.value)}</text>
+              <text x={anchorX} y={labelY + 12} className="stack-num">{fmt$(s.value)}</text>
             </g>
           );
         })}
