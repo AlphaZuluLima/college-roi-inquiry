@@ -56,17 +56,23 @@ function App() {
   const onIncomeBracketChange = (bracket) => {
     setIncomeBracketState(bracket);
     const aidFor = (sch) => bracket != null ? window.aidForBracket(sch, bracket) : 0;
-    const schA = getSchool(inputs.schoolId);
-    const schB = getSchool(inputsB.schoolId);
-    const cc   = getSchool(pathwayInputs.ccId);
-    const univ = getSchool(pathwayInputs.univId);
-    if (schA) setInputs(s => ({ ...s, aid: aidFor(schA), aidTouched: false }));
-    if (schB) setInputsB(s => ({ ...s, aid: aidFor(schB), aidTouched: false }));
-    setPathwayInputs(s => ({
-      ...s,
-      ...(cc   && !s.aidCCTouched   ? { aidCC:   aidFor(cc)   } : {}),
-      ...(univ  && !s.aidUnivTouched ? { aidUniv: aidFor(univ) } : {}),
-    }));
+    setInputs(s => {
+      const sch = getSchool(s.schoolId);
+      return sch ? { ...s, aid: aidFor(sch), aidTouched: false } : s;
+    });
+    setInputsB(s => {
+      const sch = getSchool(s.schoolId);
+      return sch ? { ...s, aid: aidFor(sch), aidTouched: false } : s;
+    });
+    setPathwayInputs(s => {
+      const cc   = getSchool(s.ccId);
+      const univ = getSchool(s.univId);
+      return {
+        ...s,
+        ...(cc   && !s.aidCCTouched   ? { aidCC:   aidFor(cc)   } : {}),
+        ...(univ && !s.aidUnivTouched ? { aidUniv: aidFor(univ) } : {}),
+      };
+    });
   };
 
   const makeSetInput = (setter) => (k, v) => setter(s => {
@@ -347,12 +353,12 @@ function CompareTable({ a, b }) {
       <div className="cmp-table-head">
         <div></div>
         <div className="cmp-th">
-          <div className="cmp-th-school">{a.school.short}</div>
-          <div className="cmp-th-prog">{a.program.name}</div>
+          <div className="cmp-th-school">{a.school?.short ?? "Unknown school"}</div>
+          <div className="cmp-th-prog">{a.program?.name ?? "Unknown program"}</div>
         </div>
         <div className="cmp-th">
-          <div className="cmp-th-school">{b.school.short}</div>
-          <div className="cmp-th-prog">{b.program.name}</div>
+          <div className="cmp-th-school">{b.school?.short ?? "Unknown school"}</div>
+          <div className="cmp-th-prog">{b.program?.name ?? "Unknown program"}</div>
         </div>
       </div>
       {rows.map((row, i) => {
@@ -385,7 +391,7 @@ class ErrorBoundary extends React.Component {
         <pre style={{ fontSize: 12, color: "#8A8478", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
           {this.state.error.message}
         </pre>
-        <button onClick={() => this.setState({ error: null, retryKey: k => k + 1 })}
+        <button onClick={() => this.setState(s => ({ error: null, retryKey: s.retryKey + 1 }))}
                 style={{ marginTop: 20, padding: "10px 20px", cursor: "pointer" }}>
           Try again
         </button>
