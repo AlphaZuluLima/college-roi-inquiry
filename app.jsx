@@ -230,14 +230,22 @@ function HeroStat({ label, value, sublabel, source, accent, big, mono = true, si
 const TWO_YR_TYPES = new Set(["Public 2-yr", "Trade"]);
 
 function InputsPanel({ inputs, setInput, customSchools, customPrograms, addCustomSchool, addCustomProgram, incomeBracket, onIncomeBracketChange }) {
-  const allSchools = [...D.SCHOOLS, ...customSchools];
-  const school = allSchools.find(s => s.id === inputs.schoolId);
-  const isTwoYr = school && TWO_YR_TYPES.has(school.type);
-  const allPrograms = [...D.PROGRAMS, ...customPrograms].filter(p => {
-    if (isTwoYr ? p.typical_years !== 2 : p.typical_years === 2) return false;
-    if (school?.offered) return school.offered.includes(p.id);
-    return true;
-  });
+  const allSchools = useMemo(
+    () => [...D.SCHOOLS, ...customSchools],
+    [customSchools]
+  );
+  const school = useMemo(
+    () => allSchools.find(s => s.id === inputs.schoolId),
+    [allSchools, inputs.schoolId]
+  );
+  const allPrograms = useMemo(() => {
+    const isTwoYr = school && TWO_YR_TYPES.has(school.type);
+    return [...D.PROGRAMS, ...customPrograms].filter(p => {
+      if (isTwoYr ? p.typical_years !== 2 : p.typical_years === 2) return false;
+      if (school?.offered) return school.offered.includes(p.id);
+      return true;
+    });
+  }, [customPrograms, school]);
   return (
     <div className="inputs">
       <div className="ipt-row">

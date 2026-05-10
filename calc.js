@@ -87,9 +87,11 @@
 
     // Simplified model: treats the full net cost as a single lump loan taken at graduation.
     // In practice, students borrow incrementally and subsidized loans defer interest while in school.
+    const loanRate = Number(opts.loanRate) || 0.0653; // fall back to federal default if field cleared
+    const loanTerm = Number(opts.loanTerm) || 10;
     const principal = netCost;
-    const monthlyPay = monthlyPayment(principal, opts.loanRate, opts.loanTerm);
-    const totalInterest = totalLoanInterest(principal, opts.loanRate, opts.loanTerm);
+    const monthlyPay = monthlyPayment(principal, loanRate, loanTerm);
+    const totalInterest = totalLoanInterest(principal, loanRate, loanTerm);
     const totalAllIn = principal + totalInterest;
 
     const sal = projectedSalary(school, program, { scenarioMult });
@@ -176,8 +178,8 @@
       yearly, yearsCount,
       totalSticker, totalAid, netCost,
       principal, monthlyPay, totalInterest, totalAllIn,
-      loanTerm: opts.loanTerm,
-      loanPaidOffAge: principal > 0 ? 18 + yearsCount + opts.loanTerm : null,
+      loanTerm,
+      loanPaidOffAge: principal > 0 ? 18 + yearsCount + loanTerm : null,
       salStart, salMid, empRate, salaryMult: sal.mult,
       series,
       breakEvenYear, beatHsYear,
@@ -202,11 +204,13 @@
     const ccYearly   = annualCost(cc,   { residency: opts.residencyCC   ?? "in", living: opts.livingCC   ?? "with-parents", aid: opts.aidCC   ?? 0, livingExpenses: opts.livingExpensesCC   ?? 0 });
     const univYearly = annualCost(univ, { residency: opts.residencyUniv ?? "in", living: opts.livingUniv ?? "on-campus",    aid: opts.aidUniv ?? 0, livingExpenses: opts.livingExpensesUniv ?? 0 });
 
+    const loanRate = Number(opts.loanRate) || 0.0653; // fall back to federal default if field cleared
+    const loanTerm = Number(opts.loanTerm) || 10;
     const ccNetCost   = Math.max(0, ccYearly.net)   * 2;
     const univNetCost = Math.max(0, univYearly.net) * 2;
     const principal   = ccNetCost + univNetCost;
-    const monthlyPay  = monthlyPayment(principal, opts.loanRate, opts.loanTerm);
-    const totalInterest = totalLoanInterest(principal, opts.loanRate, opts.loanTerm);
+    const monthlyPay  = monthlyPayment(principal, loanRate, loanTerm);
+    const totalInterest = totalLoanInterest(principal, loanRate, loanTerm);
     const totalAid    = (ccYearly.aid + univYearly.aid) * 2;
     const totalAllIn  = principal + totalInterest;
 
@@ -214,8 +218,8 @@
     const directYearly      = univYearly;
     const directNetCost     = Math.max(0, directYearly.net) * 4;
     const directPrincipal   = directNetCost;
-    const directMonthlyPay  = monthlyPayment(directPrincipal, opts.loanRate, opts.loanTerm);
-    const directTotalInterest = totalLoanInterest(directPrincipal, opts.loanRate, opts.loanTerm);
+    const directMonthlyPay  = monthlyPayment(directPrincipal, loanRate, loanTerm);
+    const directTotalInterest = totalLoanInterest(directPrincipal, loanRate, loanTerm);
     const savings = directNetCost - (ccNetCost + univNetCost);
 
     const sal      = projectedSalary(univ, program, { scenarioMult });
@@ -307,8 +311,8 @@
       school, program, yearly, yearsCount,
       totalSticker, totalAid, netCost, totalAllIn,
       principal, monthlyPay, totalInterest,
-      loanTerm: opts.loanTerm,
-      loanPaidOffAge: principal > 0 ? 18 + 4 + opts.loanTerm : null,
+      loanTerm,
+      loanPaidOffAge: principal > 0 ? 18 + yearsCount + loanTerm : null,
       salStart, salMid, empRate, salaryMult: sal.mult,
       series, breakEvenYear, beatHsYear,
       lifetimeDegree, lifetimeHs, lifetimeInvest, lifetimeEarningsGross, netRoi,
