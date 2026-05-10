@@ -1,5 +1,5 @@
 // main.jsx — Top-level App, state, comparison mode, AI fallback, root render.
-const { useState: mUseState, useEffect: mUseEffect, useMemo: mUseMemo } = React;
+const { useState: mUseState, useEffect: mUseEffect, useMemo: mUseMemo, useCallback: mUseCallback } = React;
 const { fmt$, fmt$Full, fmtPct, computeROI, compute2plus2, fetchUnknownEntity } = window.ROI_CALC;
 const D = window.ROI_DATA;
 
@@ -35,43 +35,51 @@ function App() {
     loanTerm: 10, loanRate: 0.0653,
   });
   const [pathwayInputs, setPathwayInputs] = mUseState(() => {
-    const cc   = D.SCHOOLS.find(s => s.id === DEFAULT_CC);
-    const univ = D.SCHOOLS.find(s => s.id === DEFAULT_UNIV);
     return {
       ccId: DEFAULT_CC, univId: DEFAULT_UNIV, programId: "liberal-arts",
-      residencyCC: "in",   livingCC: "with-parents", livingExpensesCC:   0, aidCC:   0,
-      residencyUniv: "in", livingUniv: "on-campus",  livingExpensesUniv: 0, aidUniv: 0,
+      residencyCC: "in",   livingCC: "with-parents", livingExpensesCC:   0, aidCC:   0, aidCCTouched:   false,
+      residencyUniv: "in", livingUniv: "on-campus",  livingExpensesUniv: 0, aidUniv: 0, aidUnivTouched: false,
       loanTerm: 10, loanRate: 0.0653,
     };
   });
 
+  // Stable lookup functions — passed via opts so render stays pure (no global mutation).
+  const getSchool = mUseCallback(
+    (id) => D.SCHOOLS.find(s => s.id === id) || customSchools.find(s => s.id === id),
+    [customSchools]
+  );
+  const getProgram = mUseCallback(
+    (id) => D.PROGRAMS.find(p => p.id === id) || customPrograms.find(p => p.id === id),
+    [customPrograms]
+  );
+
   const onIncomeBracketChange = (bracket) => {
     setIncomeBracketState(bracket);
-    const findSch = (id) => D.SCHOOLS.find(x => x.id === id) || customSchools.find(x => x.id === id);
-    const schA = findSch(inputs.schoolId);
-    const schB = findSch(inputsB.schoolId);
-    const cc   = findSch(pathwayInputs.ccId);
-    const univ = findSch(pathwayInputs.univId);
     const aidFor = (sch) => bracket != null ? window.aidForBracket(sch, bracket) : 0;
+    const schA = getSchool(inputs.schoolId);
+    const schB = getSchool(inputsB.schoolId);
+    const cc   = getSchool(pathwayInputs.ccId);
+    const univ = getSchool(pathwayInputs.univId);
     if (schA) setInputs(s => ({ ...s, aid: aidFor(schA), aidTouched: false }));
     if (schB) setInputsB(s => ({ ...s, aid: aidFor(schB), aidTouched: false }));
     setPathwayInputs(s => ({
       ...s,
-      ...(cc   ? { aidCC:   aidFor(cc)   } : {}),
-      ...(univ  ? { aidUniv: aidFor(univ) } : {}),
+      ...(cc   && !s.aidCCTouched   ? { aidCC:   aidFor(cc)   } : {}),
+      ...(univ  && !s.aidUnivTouched ? { aidUniv: aidFor(univ) } : {}),
     }));
   };
 
   const makeSetInput = (setter) => (k, v) => setter(s => {
     const next = { ...s, [k]: v };
     if (k === "schoolId") {
-      const sch = D.SCHOOLS.find(x => x.id === v) || customSchools.find(x => x.id === v);
+      const sch = getSchool(v);
       if (sch && !s.aidTouched) next.aid = incomeBracket != null ? window.aidForBracket(sch, incomeBracket) : 0;
       if (sch) {
         const isTwoYr = ["Public 2-yr", "Trade"].includes(sch.type);
-        const prog = D.PROGRAMS.find(p => p.id === s.programId);
+        const prog = getProgram(s.programId);
         if (isTwoYr !== (prog?.typical_years === 2)) {
-          const fallback = D.PROGRAMS.find(p =>
+          const allPrograms = [...D.PROGRAMS, ...customPrograms];
+          const fallback = allPrograms.find(p =>
             (isTwoYr ? p.typical_years === 2 : p.typical_years !== 2) &&
             (!sch.offered || sch.offered.includes(p.id))
           );
@@ -80,7 +88,7 @@ function App() {
       }
     }
     if (k === "programId") {
-      const prog = D.PROGRAMS.find(p => p.id === v) || customPrograms.find(p => p.id === v);
+      const prog = getProgram(v);
       if (prog?.typical_years) next.years = prog.typical_years;
     }
     if (k === "aid") next.aidTouched = true;
@@ -91,62 +99,76 @@ function App() {
   const setPathwayInput = (k, v) => setPathwayInputs(s => {
     const next = { ...s, [k]: v };
     if (k === "ccId") {
-      const cc = D.SCHOOLS.find(x => x.id === v) || customSchools.find(x => x.id === v);
-      if (cc) next.aidCC = incomeBracket != null ? window.aidForBracket(cc, incomeBracket) : 0;
+      const cc = getSchool(v);
+      if (cc && !s.aidCCTouched) next.aidCC = incomeBracket != null ? window.aidForBracket(cc, incomeBracket) : 0;
     }
     if (k === "univId") {
-      const univ = D.SCHOOLS.find(x => x.id === v) || customSchools.find(x => x.id === v);
-      if (univ) next.aidUniv = incomeBracket != null ? window.aidForBracket(univ, incomeBracket) : 0;
+      const univ = getSchool(v);
+      if (univ && !s.aidUnivTouched) next.aidUniv = incomeBracket != null ? window.aidForBracket(univ, incomeBracket) : 0;
     }
+    if (k === "aidCC")   next.aidCCTouched   = true;
+    if (k === "aidUniv") next.aidUnivTouched = true;
     return next;
   });
 
   const addCustomSchool = async (q) => {
-    setAiBusy({ kind: "school", q });
-    const obj = await fetchUnknownEntity(q, "school");
-    setAiBusy(null);
-    if (obj) {
-      setCustomSchools(s => [...s, obj]);
+    const requestId = crypto.randomUUID();
+    setAiBusy({ kind: "school", q, requestId });
+    try {
+      const obj = await fetchUnknownEntity(q, "school");
+      if (!obj) return;
+      setCustomSchools(s => s.some(x => x.id === obj.id) ? s : [...s, obj]);
       setInputs(s => ({ ...s, schoolId: obj.id, aid: s.aidTouched ? s.aid : (incomeBracket != null ? window.aidForBracket(obj, incomeBracket) : 0) }));
+    } catch (err) {
+      console.error("Failed to fetch school estimate", err);
+    } finally {
+      setAiBusy(cur => cur?.requestId === requestId ? null : cur);
     }
   };
   const addCustomProgram = async (q) => {
-    setAiBusy({ kind: "program", q });
-    const obj = await fetchUnknownEntity(q, "program");
-    setAiBusy(null);
-    if (obj) { setCustomPrograms(s => [...s, obj]); setInput("programId", obj.id); }
+    const requestId = crypto.randomUUID();
+    setAiBusy({ kind: "program", q, requestId });
+    try {
+      const obj = await fetchUnknownEntity(q, "program");
+      if (!obj) return;
+      setCustomPrograms(s => s.some(x => x.id === obj.id) ? s : [...s, obj]);
+      setInput("programId", obj.id);
+    } catch (err) {
+      console.error("Failed to fetch program estimate", err);
+    } finally {
+      setAiBusy(cur => cur?.requestId === requestId ? null : cur);
+    }
   };
-
-  // Patch synchronously so the useMemos below see custom entities on the same render cycle
-  // that adds them (useEffect would fire too late — after the memos already ran).
-  ROI_CALC.getSchool  = (id) => D.SCHOOLS.find(s => s.id === id)  || customSchools.find(s => s.id === id);
-  ROI_CALC.getProgram = (id) => D.PROGRAMS.find(p => p.id === id) || customPrograms.find(p => p.id === id);
 
   const opts = mUseMemo(() => ({
     ...inputs, salaryGrowth: t.salaryGrowth, discountRate: t.discountRate, scenario: t.scenario,
-  }), [inputs, t.salaryGrowth, t.discountRate, t.scenario]);
+    getSchool, getProgram,
+  }), [inputs, t.salaryGrowth, t.discountRate, t.scenario, getSchool, getProgram]);
 
   const optsB = mUseMemo(() => ({
     ...inputsB, salaryGrowth: t.salaryGrowth, discountRate: t.discountRate, scenario: t.scenario,
-  }), [inputsB, t.salaryGrowth, t.discountRate, t.scenario]);
+    getSchool, getProgram,
+  }), [inputsB, t.salaryGrowth, t.discountRate, t.scenario, getSchool, getProgram]);
 
   const pathwayOpts = mUseMemo(() => ({
     ...pathwayInputs, salaryGrowth: t.salaryGrowth, discountRate: t.discountRate, scenario: t.scenario,
-  }), [pathwayInputs, t.salaryGrowth, t.discountRate, t.scenario]);
+    getSchool, getProgram,
+  }), [pathwayInputs, t.salaryGrowth, t.discountRate, t.scenario, getSchool, getProgram]);
 
   const result = mUseMemo(
     () => mode === "standard" ? computeROI(opts) : compute2plus2(pathwayOpts),
-    [mode, opts, pathwayOpts, customSchools, customPrograms]
+    [mode, opts, pathwayOpts]
   );
   const resultB = mUseMemo(
     () => mode === "standard" && compareOn ? computeROI(optsB) : null,
-    [optsB, mode, compareOn, customSchools, customPrograms]
+    [optsB, mode, compareOn]
   );
 
   mUseEffect(() => {
     document.documentElement.style.setProperty("--accent", t.accent);
   }, [t.accent]);
 
+  const today = mUseMemo(() => new Date(), []);
   const isEstimated = result?.school?._estimated || result?.program?._estimated;
 
   return (
@@ -162,7 +184,7 @@ function App() {
         <div className="header-meta">
           <span>Vol. I · Issue 1</span>
           <span className="hsep" />
-          <span>{new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
+          <span>{today.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
         </div>
       </header>
 
@@ -234,7 +256,7 @@ function App() {
         <>
           <section className="compare-section">
             <div className="rs-kicker">Comparison</div>
-            <h2 className="rs-title">vs. {resultB.school.short} · {resultB.program.name}</h2>
+            <h2 className="rs-title">vs. {resultB.school?.short ?? "Unknown school"} · {resultB.program?.name ?? "Unknown program"}</h2>
             <CompareTable a={result} b={resultB} />
           </section>
           <div className="rule" />
@@ -270,7 +292,7 @@ function App() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>The College ROI Inquiry · {new Date().getFullYear()}</span>
+          <span>The College ROI Inquiry · {today.getFullYear()}</span>
           <span>Built as a public-interest demonstration. Not financial advice.</span>
         </div>
       </footer>
@@ -348,10 +370,10 @@ function CompareTable({ a, b }) {
 }
 
 class ErrorBoundary extends React.Component {
-  constructor(props) { super(props); this.state = { error: null }; }
+  constructor(props) { super(props); this.state = { error: null, retryKey: 0 }; }
   static getDerivedStateFromError(e) { return { error: e }; }
   render() {
-    if (!this.state.error) return this.props.children;
+    if (!this.state.error) return React.cloneElement(this.props.children, { key: this.state.retryKey });
     return (
       <div style={{ maxWidth: 640, margin: "80px auto", padding: "0 32px", fontFamily: "Georgia, serif" }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>§</div>
@@ -363,7 +385,7 @@ class ErrorBoundary extends React.Component {
         <pre style={{ fontSize: 12, color: "#8A8478", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
           {this.state.error.message}
         </pre>
-        <button onClick={() => this.setState({ error: null })}
+        <button onClick={() => this.setState({ error: null, retryKey: k => k + 1 })}
                 style={{ marginTop: 20, padding: "10px 20px", cursor: "pointer" }}>
           Try again
         </button>
