@@ -43,6 +43,20 @@ function EarningsChart({ result, height = 360, width = 760 }) {
   const [hover, setHover] = useState(null);
   const svgRef = useRef(null);
 
+  // Interpolate exact crossing where degreeNet overtakes hsNet post-graduation.
+  const crossPoint = (() => {
+    for (let i = result.yearsCount; i < series.length - 1; i++) {
+      const a = series[i], b = series[i + 1];
+      const dA = a.degreeNet - a.hsNet;
+      const dB = b.degreeNet - b.hsNet;
+      if (dA < 0 && dB >= 0) {
+        const t = -dA / (dB - dA);
+        return { age: a.age + t, val: a.degreeNet + t * (b.degreeNet - a.degreeNet) };
+      }
+    }
+    return null;
+  })();
+
   function onMove(e) {
     const r = svgRef.current.getBoundingClientRect();
     const px = ((e.clientX - r.left) / r.width) * width - m.l;
@@ -103,6 +117,23 @@ function EarningsChart({ result, height = 360, width = 760 }) {
                 <circle cx={x(payoffAge)} cy={payoffY} r={4} fill={C.accent} />
                 <text x={x(payoffAge) + 6} y={payoffY - 8} className="annot accent">
                   loan paid off at {payoffAge}
+                </text>
+              </g>
+            );
+          })()}
+
+          {crossPoint && (() => {
+            const cx = x(crossPoint.age);
+            const cy = y(crossPoint.val);
+            const nearRight = cx > W * 0.65;
+            return (
+              <g>
+                <circle cx={cx} cy={cy} r={5} fill={C.paper} stroke={C.hs} strokeWidth={1.5} />
+                <circle cx={cx} cy={cy} r={2.5} fill={C.hs} />
+                <text x={cx + (nearRight ? -10 : 10)} y={cy - 10}
+                      textAnchor={nearRight ? "end" : "start"}
+                      className="annot">
+                  degree beats HS — age {Math.round(crossPoint.age)}
                 </text>
               </g>
             );
