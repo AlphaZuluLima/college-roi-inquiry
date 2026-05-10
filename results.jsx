@@ -26,12 +26,14 @@ function VerdictCard({ result }) {
           </div>
         </div>
         <div>
-          <div className="vg-lbl">Break-even age</div>
-          <div className="vg-num mono">{r.breakEvenYear != null ? 18 + r.breakEvenYear : "—"}</div>
+          <div className="vg-lbl">Loan paid off</div>
+          <div className="vg-num mono">
+            {r.principal > 0 ? `Age ${18 + r.yearsCount + r.loanTerm}` : "No loan"}
+          </div>
         </div>
         <div>
-          <div className="vg-lbl">Years to recoup</div>
-          <div className="vg-num mono">{r.breakEvenYear != null ? (r.breakEvenYear - r.yearsCount) : "never"}</div>
+          <div className="vg-lbl">Years of payments</div>
+          <div className="vg-num mono">{r.principal > 0 ? r.loanTerm : "—"}</div>
         </div>
       </div>
     </div>

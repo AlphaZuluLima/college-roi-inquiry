@@ -88,10 +88,7 @@
     const empRate = Math.min(0.99, school.employ_6mo * (program.employ_field) ** 0.7 * scenarioMult);
     const expectedAnnual = (yr) => salaryAtYear(salStart, salMid, opts.salaryGrowth ?? program.growth, yr) * empRate;
 
-    const hsAnnual = (yr) => {
-      return D.HS_GRAD_SALARY_START * Math.pow(1 + D.HS_GRAD_GROWTH, yr) +
-             (D.HS_GRAD_SALARY_MID - D.HS_GRAD_SALARY_START) * Math.min(1, yr / 13);
-    };
+    const hsAnnual = (yr) => salaryAtYear(D.HS_GRAD_SALARY_START, D.HS_GRAD_SALARY_MID, D.HS_GRAD_GROWTH, yr);
 
     const horizon = 50;
     const series = [];
@@ -167,6 +164,7 @@
       yearly, yearsCount,
       totalSticker, totalAid, netCost,
       principal, monthlyPay, totalInterest, totalCostWithInterest, totalAllIn,
+      loanTerm: opts.loanTerm,
       salStart, salMid, empRate, salaryMult: sal.mult,
       series,
       breakEvenYear, beatHsYear,
@@ -212,9 +210,7 @@
     const empRate  = Math.min(0.99, univ.employ_6mo * (program.employ_field) ** 0.7 * scenarioMult);
     const expectedAnnual = (yr) => salaryAtYear(salStart, salMid, opts.salaryGrowth ?? program.growth, yr) * empRate;
 
-    const hsAnnual = (yr) =>
-      D.HS_GRAD_SALARY_START * Math.pow(1 + D.HS_GRAD_GROWTH, yr) +
-      (D.HS_GRAD_SALARY_MID - D.HS_GRAD_SALARY_START) * Math.min(1, yr / 13);
+    const hsAnnual = (yr) => salaryAtYear(D.HS_GRAD_SALARY_START, D.HS_GRAD_SALARY_MID, D.HS_GRAD_GROWTH, yr);
 
     const series = [];
     let cumDegreeNet = 0, cumHsNet = 0, cumInvestAlt = 0;
@@ -295,6 +291,7 @@
       school, program, yearly, yearsCount,
       totalSticker, totalAid, netCost, totalCostWithInterest, totalAllIn,
       principal, monthlyPay, totalInterest,
+      loanTerm: opts.loanTerm,
       salStart, salMid, empRate, salaryMult: sal.mult,
       series, breakEvenYear, beatHsYear,
       lifetimeDegree, lifetimeHs, lifetimeInvest, lifetimeEarningsGross, netRoi,

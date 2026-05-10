@@ -85,16 +85,21 @@ function EarningsChart({ result, height = 360, width = 760 }) {
           <path d={path("hsNet")} fill="none" stroke={C.hs} strokeWidth={1.6} />
           <path d={path("degreeNet")} fill="none" stroke={C.accent} strokeWidth={2.4} />
 
-          {result.breakEvenYear != null && (
-            <g>
-              <line x1={x(18 + result.breakEvenYear)} x2={x(18 + result.breakEvenYear)}
-                    y1={0} y2={H} stroke={C.accent} strokeWidth={0.8} strokeDasharray="2 3" opacity="0.7" />
-              <circle cx={x(18 + result.breakEvenYear)} cy={y(0)} r={4} fill={C.accent} />
-              <text x={x(18 + result.breakEvenYear) + 6} y={y(0) - 8} className="annot accent">
-                break-even at {18 + result.breakEvenYear}
-              </text>
-            </g>
-          )}
+          {result.principal > 0 && (() => {
+            const payoffAge = 18 + result.yearsCount + result.loanTerm;
+            const payoffIdx = result.yearsCount + result.loanTerm;
+            const payoffY = payoffIdx < result.series.length ? y(result.series[payoffIdx].degreeNet) : H;
+            return (
+              <g>
+                <line x1={x(payoffAge)} x2={x(payoffAge)}
+                      y1={0} y2={H} stroke={C.accent} strokeWidth={0.8} strokeDasharray="2 3" opacity="0.7" />
+                <circle cx={x(payoffAge)} cy={payoffY} r={4} fill={C.accent} />
+                <text x={x(payoffAge) + 6} y={payoffY - 8} className="annot accent">
+                  loan paid off at {payoffAge}
+                </text>
+              </g>
+            );
+          })()}
 
           <EndLabel x={W} y={y(series[series.length-1].degreeNet)} text={`Degree path · ${fmtAxis(series[series.length-1].degreeNet)}`} color={C.accent} bold />
           <EndLabel x={W} y={y(series[series.length-1].hsNet)} text={`HS only · ${fmtAxis(series[series.length-1].hsNet)}`} color={C.hs} />

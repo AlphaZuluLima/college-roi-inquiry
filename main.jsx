@@ -304,7 +304,7 @@ function CompareTable({ a, b }) {
     { lbl: "Starting salary", val: r => fmt$(r.salStart), better: "higher" },
     { lbl: "Mid-career salary", val: r => fmt$(r.salMid), better: "higher" },
     { lbl: "Employment in field", val: r => fmtPct(r.empRate), better: "higher" },
-    { lbl: "Break-even age", val: r => r.breakEvenYear != null ? 18 + r.breakEvenYear : "never", better: "lower" },
+    { lbl: "Loan paid off", val: r => r.principal > 0 ? `Age ${18 + r.yearsCount + r.loanTerm}` : "No loan", better: "lower" },
     { lbl: "Net lifetime gain (vs HS)", val: r => fmt$(r.netRoi), better: "higher" },
   ];
   function which(row) {
@@ -314,7 +314,7 @@ function CompareTable({ a, b }) {
       row.lbl.includes("Starting")   ? r.salStart :
       row.lbl.includes("Mid")        ? r.salMid :
       row.lbl.includes("Employment") ? r.empRate :
-      row.lbl.includes("Break")      ? (r.breakEvenYear ?? 999) :
+      row.lbl.includes("Loan paid")   ? (r.principal > 0 ? 18 + r.yearsCount + r.loanTerm : 999) :
       r.netRoi;
     const ra = get(a), rb = get(b);
     if (row.better === "higher") return ra > rb ? "a" : rb > ra ? "b" : null;
