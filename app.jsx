@@ -1,5 +1,5 @@
 // app.jsx — Input components: Combobox, Info, HeroStat, InputsPanel.
-const { useState, useMemo, useEffect, useRef } = React;
+const { useState, useMemo, useEffect, useRef, useId } = React;
 const D = window.ROI_DATA;
 
 // Aid for a given income bracket index (0-4), falling back to avg_aid when no data.
@@ -9,7 +9,10 @@ window.aidForBracket = function(school, bracketIdx) {
   if (!nets) return school.avg_aid;
   const net = nets[bracketIdx];
   if (net == null) return school.avg_aid;
-  const sticker = school.tuition_in + school.room_board + school.books;
+  const sticker =
+    Number(school.tuition_in  || 0) +
+    Number(school.room_board  || 0) +
+    Number(school.books       || 0);
   return Math.max(0, sticker - Math.max(0, net));
 };
 
@@ -58,6 +61,7 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
   const [typeFilter, setTypeFilter] = useState(null);
   const [stateFilter, setStateFilter] = useState("");
   const ref = useRef(null);
+  const listboxId = useId();
 
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
@@ -95,12 +99,10 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
     return g;
   }, [filt, iconType]);
 
-  const listboxId = useRef(`cb-list-${Math.random().toString(36).slice(2)}`);
-
   return (
     <div className="cb" ref={ref}>
-      <button type="button" role="combobox" aria-expanded={open} aria-haspopup="listbox"
-              aria-controls={open ? listboxId.current : undefined}
+      <button type="button" aria-expanded={open} aria-haspopup="listbox"
+              aria-controls={listboxId}
               className={"cb-trigger" + (open ? " open" : "")} onClick={() => setOpen(o => !o)}>
         <span className="cb-icon">{iconType === "school" ? "◇" : "◊"}</span>
         <span className="cb-text">{selected ? selected[displayKey] : <em>{placeholder}</em>}</span>
@@ -131,7 +133,7 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
               placeholder={iconType === "school" ? "Search school or type any college…" : "Search program or type a major…"}
             />
           </div>
-          <div id={listboxId.current} className="cb-list" role="listbox">
+          <div id={listboxId} className="cb-list" role="listbox">
             {grouped ? (
               Object.entries(grouped).map(([g, lst]) => (
                 <div key={g}>
@@ -176,14 +178,16 @@ function Combobox({ items, value, onChange, placeholder, displayKey = "name", ic
 }
 
 function Info({ label, source, detail }) {
-  const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [pinned, setPinned]   = useState(false);
+  const open = hovered || pinned;
   const isObj = source && typeof source === "object";
   const ariaLabel = typeof label === "string" ? `More info about ${label}` : "More info";
   return (
     <span className="info-wrap"
-          onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+          onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       <button type="button" className="info-btn" aria-label={ariaLabel}
-              onClick={() => setOpen(o => !o)}>
+              onClick={() => setPinned(o => !o)}>
         <svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.6" fill="none" stroke="currentColor" strokeWidth="0.9"/><text x="5.5" y="8.2" textAnchor="middle" fontSize="7" fontFamily="serif" fontStyle="italic">i</text></svg>
       </button>
       {open && (
@@ -281,7 +285,10 @@ function InputsPanel({ inputs, setInput, customSchools, customPrograms, addCusto
                    options={[[10, "10y"], [15, "15y"], [20, "20y"], [25, "25y"]]} />
         </Field>
         <Field label={<span>Loan rate <Info source={D.SOURCES.loanRate} detail="2024–25 federal direct subsidized rate is 6.53%. Override below." /></span>}>
-          <NumInput value={Math.round(inputs.loanRate * 10000) / 100} onChange={(v) => setInput("loanRate", v / 100)} suffix="%" step={0.1} decimals={2} />
+          <NumInput
+            value={inputs.loanRate === "" ? "" : Math.round(inputs.loanRate * 10000) / 100}
+            onChange={(v) => setInput("loanRate", v === "" ? "" : v / 100)}
+            suffix="%" step={0.1} />
         </Field>
       </div>
     </div>
@@ -303,7 +310,7 @@ function Segment({ value, onChange, options }) {
   );
 }
 
-function NumInput({ value, onChange, prefix, suffix, step = 1, decimals = 0, sublabel }) {
+function NumInput({ value, onChange, prefix, suffix, step = 1, sublabel }) {
   return (
     <div className="numinp-wrap">
       {sublabel && <span className="numinp-sublabel">{sublabel}</span>}

@@ -162,8 +162,10 @@ function PathwayPanel({
                    options={[[10,"10y"],[15,"15y"],[20,"20y"],[25,"25y"]]} />
         </Field>
         <Field label="Loan rate">
-          <NumInput value={Math.round(inputs.loanRate * 10000) / 100}
-                    onChange={v => setInput("loanRate", v / 100)} suffix="%" step={0.1} decimals={2} />
+          <NumInput
+            value={inputs.loanRate === "" ? "" : Math.round(inputs.loanRate * 10000) / 100}
+            onChange={v => setInput("loanRate", v === "" ? "" : v / 100)}
+            suffix="%" step={0.1} />
         </Field>
       </div>
     </div>
