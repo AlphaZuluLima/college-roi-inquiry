@@ -117,6 +117,17 @@
     const empRate = Number.isFinite(rawEmpRate) ? clamp(rawEmpRate, 0, 0.99) : 0;
     const expectedAnnual = (yr) => salaryAtYear(salStart, salMid, opts.salaryGrowth ?? program.growth, yr) * empRate;
 
+    // Repayment plan projections (informational — shown alongside result, not used in series).
+    // Uses year-1 salary as AGI proxy. RAP rate = min(10%, floor(AGI/$10k)+1%).
+    const ibrNewMonthly  = principal > 0 ? Math.max(0, (salStart - IBR_FPL_150) * 0.10 / 12) : 0;
+    const rapRatePct     = Math.min(10, Math.floor(salStart / 10000) + 1);
+    const rapMonthly     = principal > 0 ? (salStart * rapRatePct / 100) / 12 : 0;
+    const repayment = {
+      standard: { monthly: stdMonthlyPay, termYears: loanTerm,  forgives: false },
+      ibr:      { monthly: ibrNewMonthly, termYears: 20,        forgives: true  },
+      rap:      { monthly: rapMonthly,    termYears: 30,        forgives: true  },
+    };
+
     // PSLF: IBR (new) payments for 10 years, then tax-free forgiveness.
     // IBR payment = max(0, (AGI − 150% FPL) × 10% / 12); AGI proxied by year-1 salary.
     const pslf = !!opts.pslf;
@@ -228,6 +239,7 @@
       monthlyIncomeYr1,
       pslf, pslfForgiven,
       aotcAnnual, totalAotc,
+      repayment,
     };
   }
 
@@ -271,6 +283,14 @@
     const rawEmpRate2 = univ.employ_6mo * Math.pow(program.employ_field, 0.7) * scenarioMult;
     const empRate  = Number.isFinite(rawEmpRate2) ? clamp(rawEmpRate2, 0, 0.99) : 0;
     const expectedAnnual = (yr) => salaryAtYear(salStart, salMid, opts.salaryGrowth ?? program.growth, yr) * empRate;
+
+    const ibrNew2p2   = principal > 0 ? Math.max(0, (salStart - IBR_FPL_150) * 0.10 / 12) : 0;
+    const rapRate2p2  = Math.min(10, Math.floor(salStart / 10000) + 1);
+    const repayment   = {
+      standard: { monthly: monthlyPay,    termYears: loanTerm, forgives: false },
+      ibr:      { monthly: ibrNew2p2,     termYears: 20,       forgives: true  },
+      rap:      { monthly: (salStart * rapRate2p2 / 100) / 12, termYears: 30, forgives: true },
+    };
 
     const hsAnnual = (yr) => salaryAtYear(D.HS_GRAD_SALARY_START, D.HS_GRAD_SALARY_MID, D.HS_GRAD_GROWTH, yr);
 
@@ -359,6 +379,8 @@
       series, breakEvenYear, beatHsYear,
       lifetimeDegree, lifetimeHs, lifetimeInvest, lifetimeEarningsGross, netRoi,
       npv, debtBurden, verdict, monthlyIncomeYr1,
+      repayment,
+      pslf: false, pslfForgiven: 0, aotcAnnual: 0, totalAotc: 0,
     };
   }
 

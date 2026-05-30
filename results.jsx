@@ -132,6 +132,35 @@ function Legend({ items }) {
   );
 }
 
+function RepaymentPanel({ result }) {
+  const r = result;
+  if (!r || r.pslf || r.principal <= 0) return null;
+  const { repayment: rp, salStart } = r;
+  const plans = [
+    { label: "Standard",   sub: `${rp.standard.termYears}-yr payoff`, monthly: rp.standard.monthly, active: true  },
+    { label: "IBR (new)",  sub: `20-yr → forgiven†`,              monthly: rp.ibr.monthly,      active: false },
+    { label: "RAP",        sub: `30-yr → forgiven†`,              monthly: rp.rap.monthly,      active: false },
+  ];
+  return (
+    <div className="rp-panel">
+      <div className="rp-head">
+        <span className="rp-title">Monthly payment at {fmt$(salStart)} starting salary</span>
+        <span className="rp-note">Qualifying for IBR or RAP requires enrolling with your servicer after graduation</span>
+      </div>
+      <div className="rp-rows">
+        {plans.map(p => (
+          <div key={p.label} className={"rp-row" + (p.active ? " rp-active" : "")}>
+            <span className="rp-plan">{p.label}{p.active && <span className="rp-tag">this calc</span>}</span>
+            <span className="rp-mo mono">{fmt$Full(p.monthly)}<span className="rp-mounit">/mo</span></span>
+            <span className="rp-sub">{p.sub}</span>
+          </div>
+        ))}
+      </div>
+      <div className="rp-foot">† IDR forgiveness is taxable income (ARPA exemption expired Jan 2026). Enable PSLF toggle for tax-free forgiveness.</div>
+    </div>
+  );
+}
+
 function ResultsView({ result }) {
   if (!result) return null;
   const r = result;
@@ -139,6 +168,7 @@ function ResultsView({ result }) {
     <div className="results">
       <VerdictCard result={r} />
       <HeroRow result={r} />
+      <RepaymentPanel result={r} />
 
       <Section
         kicker="Section 01"
@@ -178,4 +208,4 @@ function ResultsView({ result }) {
   );
 }
 
-Object.assign(window, { VerdictCard, HeroRow, Section, Legend, ResultsView });
+Object.assign(window, { VerdictCard, HeroRow, RepaymentPanel, Section, Legend, ResultsView });

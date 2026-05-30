@@ -245,6 +245,22 @@ i{font-style:italic}
 .hero-num.mono{font-family:var(--mono)}
 .hero-sub{font-family:var(--serif);font-size:13px;font-style:italic;color:var(--ink-2);margin-top:4px}
 
+/* ─── Repayment panel ────────────────────────────────────────────────── */
+.rp-panel{border:1px solid var(--rule);padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+.rp-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.rp-title{font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+.rp-note{font:400 11px/1 var(--mono);color:var(--ink-3)}
+.rp-rows{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--rule)}
+.rp-row{display:flex;flex-direction:column;gap:5px;padding:14px 16px;border-right:1px solid var(--rule)}
+.rp-row:last-child{border-right:0}
+.rp-active{background:color-mix(in srgb,var(--accent) 5%,transparent)}
+.rp-plan{font:600 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);display:flex;align-items:center;gap:7px}
+.rp-tag{font:500 9px/1 var(--mono);letter-spacing:.07em;padding:2px 5px;background:var(--accent);color:var(--paper);text-transform:uppercase}
+.rp-mo{font-size:26px;font-weight:500;color:var(--ink);line-height:1}
+.rp-mounit{font-size:13px;font-weight:400;color:var(--ink-2);margin-left:1px}
+.rp-sub{font:400 11px/1 var(--mono);color:var(--ink-2)}
+.rp-foot{font:400 10px/1.4 var(--mono);color:var(--ink-3);border-top:1px solid var(--rule);padding-top:12px}
+
 /* ─── Section ────────────────────────────────────────────────────────── */
 .rs-sec{display:grid;grid-template-columns:240px 1fr;gap:48px;align-items:start}
 .rs-head{position:sticky;top:24px}
