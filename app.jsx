@@ -8,7 +8,11 @@ window.aidForBracket = function(school, bracketIdx) {
   const nets = (window.ROI_INCOME || {})[school.id];
   if (!nets) return school.avg_aid;
   const net = nets[bracketIdx];
-  if (net == null) return school.avg_aid;
+  if (net == null) {
+    // Bracket 4 = $110k+: Scorecard has no data at this level; default to $0
+    // (families above $110k rarely qualify for need-based aid).
+    return bracketIdx === 4 ? 0 : school.avg_aid;
+  }
   const sticker =
     Number(school.tuition_in  || 0) +
     Number(school.room_board  || 0) +
@@ -22,6 +26,7 @@ const INCOME_BRACKETS = [
   [1,    "$30–48k"],
   [2,    "$48–75k"],
   [3,    "$75–110k"],
+  [4,    "$110k+"],
 ];
 
 function IncomeSel({ value, onChange }) {
