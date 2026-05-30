@@ -52,8 +52,10 @@ function HeroRow({ result }) {
     <div className="hero-row">
       <HeroStat
         label="Total cost of attendance"
-        value={fmt$(r.netCost + r.totalAid)}
-        sublabel={`Net of aid: ${fmt$(r.netCost)} · ${r.yearsCount} years`}
+        value={fmt$(r.totalSticker)}
+        sublabel={r.totalAotc > 0
+          ? `Aid: −${fmt$(r.totalAid)} · AOTC: −${fmt$(r.totalAotc)} → Net: ${fmt$(r.netCost)} · ${r.yearsCount} yr`
+          : `Net of aid: ${fmt$(r.netCost)} · ${r.yearsCount} years`}
         source={D.SOURCES.tuition}
         big
       />

@@ -152,15 +152,15 @@ function App() {
 
   const opts = mUseMemo(() => ({
     ...inputs, salaryGrowth: t.salaryGrowth, discountRate: t.discountRate, scenario: t.scenario,
-    pslf,
+    pslf, incomeBracket,
     getSchool, getProgram,
-  }), [inputs, t.salaryGrowth, t.discountRate, t.scenario, pslf, getSchool, getProgram]);
+  }), [inputs, t.salaryGrowth, t.discountRate, t.scenario, pslf, incomeBracket, getSchool, getProgram]);
 
   const optsB = mUseMemo(() => ({
     ...inputsB, salaryGrowth: t.salaryGrowth, discountRate: t.discountRate, scenario: t.scenario,
-    pslf,
+    pslf, incomeBracket,
     getSchool, getProgram,
-  }), [inputsB, t.salaryGrowth, t.discountRate, t.scenario, pslf, getSchool, getProgram]);
+  }), [inputsB, t.salaryGrowth, t.discountRate, t.scenario, pslf, incomeBracket, getSchool, getProgram]);
 
   const pathwayOpts = mUseMemo(() => ({
     ...pathwayInputs, salaryGrowth: t.salaryGrowth, discountRate: t.discountRate, scenario: t.scenario,

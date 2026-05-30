@@ -85,7 +85,21 @@
     const yearsCount = Math.max(1, Math.round(Number(opts.years) || 4));
     const totalSticker = yearly.gross * yearsCount;
     const totalAid = yearly.aid * yearsCount;
-    const netCost = yearly.net * yearsCount;
+
+    // AOTC: up to $2,500/yr tax credit for first 5 years of post-secondary study (OBBBA).
+    // Bracket 0 (<$30k): $1,000 (only the 40% refundable portion is reliable at low income).
+    // Brackets 1–3 ($30k–$110k): $2,500 (full credit; single phaseout begins at $90k but
+    //   most families in this range file MFJ and qualify fully up to $180k).
+    // Bracket 4 ($110k+): $0 (above single phaseout; MFJ varies but unknown filing status).
+    // Manual (null): $0 (user controls aid directly).
+    const AOTC_BY_BRACKET = [1000, 2500, 2500, 2500, 0];
+    const aotcAnnual = (opts.incomeBracket != null && opts.incomeBracket >= 0)
+      ? (AOTC_BY_BRACKET[opts.incomeBracket] ?? 0)
+      : 0;
+    const aotcYears = Math.min(yearsCount, 5);
+    const totalAotc = aotcAnnual * aotcYears;
+
+    const netCost = Math.max(0, yearly.net * yearsCount - totalAotc);
 
     // Simplified model: treats the full net cost as a single lump loan taken at graduation.
     // In practice, students borrow incrementally and subsidized loans defer interest while in school.
@@ -144,7 +158,8 @@
       let hsIncome = hsAnnual(y);
 
       if (y < yearsCount) {
-        degreeExpense = yearly.net;
+        const yearAotc = y < 5 ? aotcAnnual : 0;
+        degreeExpense = Math.max(0, yearly.net - yearAotc);
       } else {
         degreeIncome = expectedAnnual(workYear);
         if (workYear < activeLoanTerm) {
@@ -212,6 +227,7 @@
       npv, debtBurden, verdict,
       monthlyIncomeYr1,
       pslf, pslfForgiven,
+      aotcAnnual, totalAotc,
     };
   }
 
