@@ -17,6 +17,7 @@ function VerdictCard({ result }) {
     <div className={"verdict v-" + v}>
       <div className="verdict-mark">
         <span className={"verdict-kicker " + txt.tone}>{txt.kicker}</span>
+        {r.pslf && <span className="pslf-badge">PSLF</span>}
         <span className="verdict-line">{txt.line}</span>
       </div>
       <div className="verdict-grid">
@@ -27,14 +28,18 @@ function VerdictCard({ result }) {
           </div>
         </div>
         <div>
-          <div className="vg-lbl">Est. loan payoff age</div>
+          <div className="vg-lbl">{r.pslf ? "Forgiveness age" : "Est. loan payoff age"}</div>
           <div className="vg-num mono">
             {r.loanPaidOffAge != null ? `Age ${r.loanPaidOffAge}` : "No loan"}
           </div>
         </div>
         <div>
-          <div className="vg-lbl">Years of payments</div>
-          <div className="vg-num mono">{r.principal > 0 ? `${r.loanTerm} yrs` : "—"}</div>
+          <div className="vg-lbl">{r.pslf ? "Est. forgiven" : "Years of payments"}</div>
+          <div className="vg-num mono">
+            {r.pslf
+              ? (r.pslfForgiven > 0 ? fmt$(r.pslfForgiven) : "—")
+              : (r.principal > 0 ? `${r.loanTerm} yrs` : "—")}
+          </div>
         </div>
       </div>
     </div>
@@ -53,16 +58,20 @@ function HeroRow({ result }) {
         big
       />
       <HeroStat
-        label="Net cost incl. interest"
+        label={r.pslf ? "Total IBR payments (10 yr)" : "Net cost incl. interest"}
         value={fmt$(r.totalAllIn)}
-        sublabel={`Principal: ${fmt$(r.principal)} · Interest: ${fmt$(r.totalInterest)}`}
+        sublabel={r.pslf
+          ? `Principal borrowed: ${fmt$(r.principal)} · Est. forgiven: ${fmt$(r.pslfForgiven)}`
+          : `Principal: ${fmt$(r.principal)} · Interest: ${fmt$(r.totalInterest)}`}
         source={D.SOURCES.loanRate}
         big
       />
       <HeroStat
-        label="Monthly loan payment"
+        label={r.pslf ? "Monthly IBR payment" : "Monthly loan payment"}
         value={fmt$Full(r.monthlyPay)}
-        sublabel={`${(r.debtBurden * 100).toFixed(0)}% of expected yr-1 income (emp.-adj.)`}
+        sublabel={r.pslf
+          ? `${(r.debtBurden * 100).toFixed(0)}% of yr-1 income · forgiven after 10 yrs`
+          : `${(r.debtBurden * 100).toFixed(0)}% of expected yr-1 income (emp.-adj.)`}
         big mono
       />
       <HeroStat

@@ -240,7 +240,7 @@ function HeroStat({ label, value, sublabel, source, accent, big, mono = true, si
 
 const TWO_YR_TYPES = new Set(["Public 2-yr", "Trade"]);
 
-function InputsPanel({ inputs, setInput, customSchools, customPrograms, addCustomSchool, addCustomProgram, incomeBracket, onIncomeBracketChange }) {
+function InputsPanel({ inputs, setInput, customSchools, customPrograms, addCustomSchool, addCustomProgram, incomeBracket, onIncomeBracketChange, pslf, onPslfChange }) {
   const allSchools = useMemo(
     () => [...D.SCHOOLS, ...customSchools],
     [customSchools]
@@ -310,6 +310,15 @@ function InputsPanel({ inputs, setInput, customSchools, customPrograms, addCusto
             suffix="%" step={0.1} />
         </Field>
       </div>
+
+      <label className={"pslf-toggle" + (pslf ? " on" : "")}>
+        <input type="checkbox" checked={!!pslf} onChange={e => onPslfChange(e.target.checked)} />
+        <span className="pslf-toggle-check" aria-hidden="true">{pslf ? "✓" : ""}</span>
+        <span className="pslf-toggle-text">
+          PSLF pathway
+          <span className="pslf-toggle-sub">Government or 501(c)(3) employer — models 10 yrs of IBR payments then tax-free forgiveness</span>
+        </span>
+      </label>
     </div>
   );
 }

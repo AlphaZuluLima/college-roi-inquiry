@@ -180,6 +180,22 @@ i{font-style:italic}
   min-height:calc(var(--control-h) - 2px);
   font:500 16px/1 var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
 
+.pslf-toggle{display:flex;align-items:flex-start;gap:10px;margin-top:18px;padding:12px 14px;
+  border:1px solid var(--rule);cursor:pointer;user-select:none;transition:border-color .15s,background .15s}
+.pslf-toggle:hover{border-color:var(--ink-3)}
+.pslf-toggle.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.pslf-toggle input[type=checkbox]{position:absolute;opacity:0;width:0;height:0}
+.pslf-toggle-check{flex:0 0 16px;width:16px;height:16px;border:1.5px solid var(--ink-2);
+  display:flex;align-items:center;justify-content:center;margin-top:1px;
+  font-size:10px;color:var(--paper);background:transparent;transition:background .15s,border-color .15s}
+.pslf-toggle.on .pslf-toggle-check{background:var(--accent);border-color:var(--accent)}
+.pslf-toggle-text{display:flex;flex-direction:column;gap:3px}
+.pslf-toggle-text>span:first-child{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.pslf-toggle-sub{font:400 11px/1.4 var(--mono);color:var(--ink-2)}
+.pslf-badge{display:inline-block;padding:2px 7px;margin-left:10px;
+  font:700 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+  background:var(--accent);color:var(--paper);vertical-align:middle}
+
 .ipt-footer{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-top:6px}
 .compare-divider{border:0;border-top:1px dashed var(--rule);margin:24px 0}
 .compare-btn{background:transparent;border:1px solid var(--ink);

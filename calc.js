@@ -5,6 +5,8 @@
   const D = window.ROI_DATA;
 
   const HORIZON_YEARS = 50;
+  const PSLF_TERM    = 10;    // years of qualifying payments before forgiveness
+  const IBR_FPL_150  = 23475; // 150% of 2025 federal poverty line, single filer
 
   function clamp(n, lo, hi) { return Math.min(hi, Math.max(lo, n)); }
 
@@ -90,9 +92,8 @@
     const loanRate = Number(opts.loanRate) || 0.0653; // fall back to federal default if field cleared
     const loanTerm = Number(opts.loanTerm) || 10;
     const principal = netCost;
-    const monthlyPay = monthlyPayment(principal, loanRate, loanTerm);
-    const totalInterest = totalLoanInterest(principal, loanRate, loanTerm);
-    const totalAllIn = principal + totalInterest;
+    const stdMonthlyPay = monthlyPayment(principal, loanRate, loanTerm);
+    const stdTotalInterest = totalLoanInterest(principal, loanRate, loanTerm);
 
     const sal = projectedSalary(school, program, { scenarioMult });
     const scorecard = (window.ROI_EARNINGS || {})[school.id]?.[program.id];
@@ -101,6 +102,30 @@
     const rawEmpRate = school.employ_6mo * Math.pow(program.employ_field, 0.7) * scenarioMult;
     const empRate = Number.isFinite(rawEmpRate) ? clamp(rawEmpRate, 0, 0.99) : 0;
     const expectedAnnual = (yr) => salaryAtYear(salStart, salMid, opts.salaryGrowth ?? program.growth, yr) * empRate;
+
+    // PSLF: IBR (new) payments for 10 years, then tax-free forgiveness.
+    // IBR payment = max(0, (AGI − 150% FPL) × 10% / 12); AGI proxied by year-1 salary.
+    const pslf = !!opts.pslf;
+    const pslfMonthlyPay = pslf
+      ? Math.max(0, (salStart - IBR_FPL_150) * 0.10 / 12)
+      : null;
+    // Remaining balance after PSLF_TERM years of IBR payments (standard amortization formula).
+    const pslfForgiven = (() => {
+      if (!pslf || principal <= 0) return 0;
+      const r = loanRate / 12;
+      const n = PSLF_TERM * 12;
+      const grown = principal * Math.pow(1 + r, n);
+      const paid  = r > 0
+        ? pslfMonthlyPay * ((Math.pow(1 + r, n) - 1) / r)
+        : pslfMonthlyPay * n;
+      return Math.max(0, grown - paid);
+    })();
+    const pslfTotalPaid = pslf ? pslfMonthlyPay * 12 * PSLF_TERM : null;
+
+    const activeLoanTerm   = pslf ? PSLF_TERM : loanTerm;
+    const monthlyPay       = pslf ? pslfMonthlyPay : stdMonthlyPay;
+    const totalInterest    = pslf ? Math.max(0, pslfTotalPaid - principal) : stdTotalInterest;
+    const totalAllIn       = pslf ? pslfTotalPaid : principal + stdTotalInterest;
 
     const hsAnnual = (yr) => salaryAtYear(D.HS_GRAD_SALARY_START, D.HS_GRAD_SALARY_MID, D.HS_GRAD_GROWTH, yr);
 
@@ -122,7 +147,7 @@
         degreeExpense = yearly.net;
       } else {
         degreeIncome = expectedAnnual(workYear);
-        if (workYear < opts.loanTerm) {
+        if (workYear < activeLoanTerm) {
           degreeExpense = monthlyPay * 12;
         }
         workYear++;
@@ -178,14 +203,15 @@
       yearly, yearsCount,
       totalSticker, totalAid, netCost,
       principal, monthlyPay, totalInterest, totalAllIn,
-      loanTerm,
-      loanPaidOffAge: principal > 0 ? 18 + yearsCount + loanTerm : null,
+      loanTerm: activeLoanTerm,
+      loanPaidOffAge: principal > 0 ? 18 + yearsCount + activeLoanTerm : null,
       salStart, salMid, empRate, salaryMult: sal.mult,
       series,
       breakEvenYear, beatHsYear,
       lifetimeDegree, lifetimeHs, lifetimeInvest, netRoi, lifetimeEarningsGross,
       npv, debtBurden, verdict,
       monthlyIncomeYr1,
+      pslf, pslfForgiven,
     };
   }
 

@@ -10,6 +10,7 @@ function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [mode, setMode] = mUseState("standard"); // "standard" | "pathway"
   const [incomeBracket, setIncomeBracketState] = mUseState(null);
+  const [pslf, setPslf] = mUseState(false);
 
   const [customSchools, setCustomSchools] = mUseState([]);
   const [customPrograms, setCustomPrograms] = mUseState([]);
@@ -151,13 +152,15 @@ function App() {
 
   const opts = mUseMemo(() => ({
     ...inputs, salaryGrowth: t.salaryGrowth, discountRate: t.discountRate, scenario: t.scenario,
+    pslf,
     getSchool, getProgram,
-  }), [inputs, t.salaryGrowth, t.discountRate, t.scenario, getSchool, getProgram]);
+  }), [inputs, t.salaryGrowth, t.discountRate, t.scenario, pslf, getSchool, getProgram]);
 
   const optsB = mUseMemo(() => ({
     ...inputsB, salaryGrowth: t.salaryGrowth, discountRate: t.discountRate, scenario: t.scenario,
+    pslf,
     getSchool, getProgram,
-  }), [inputsB, t.salaryGrowth, t.discountRate, t.scenario, getSchool, getProgram]);
+  }), [inputsB, t.salaryGrowth, t.discountRate, t.scenario, pslf, getSchool, getProgram]);
 
   const pathwayOpts = mUseMemo(() => ({
     ...pathwayInputs, salaryGrowth: t.salaryGrowth, discountRate: t.discountRate, scenario: t.scenario,
@@ -222,7 +225,8 @@ function App() {
           ? <InputsPanel inputs={inputs} setInput={setInput}
                          customSchools={customSchools} customPrograms={customPrograms}
                          addCustomSchool={addCustomSchool} addCustomProgram={addCustomProgram}
-                         incomeBracket={incomeBracket} onIncomeBracketChange={onIncomeBracketChange} />
+                         incomeBracket={incomeBracket} onIncomeBracketChange={onIncomeBracketChange}
+                         pslf={pslf} onPslfChange={setPslf} />
           : <PathwayPanel inputs={pathwayInputs} setInput={setPathwayInput}
                           customSchools={customSchools} customPrograms={customPrograms}
                           incomeBracket={incomeBracket} onIncomeBracketChange={onIncomeBracketChange} />
@@ -234,7 +238,8 @@ function App() {
             <InputsPanel inputs={inputsB} setInput={setInputB}
                          customSchools={customSchools} customPrograms={customPrograms}
                          addCustomSchool={addCustomSchool} addCustomProgram={addCustomProgram}
-                         incomeBracket={incomeBracket} onIncomeBracketChange={onIncomeBracketChange} />
+                         incomeBracket={incomeBracket} onIncomeBracketChange={onIncomeBracketChange}
+                         pslf={pslf} onPslfChange={setPslf} />
           </>
         )}
 
