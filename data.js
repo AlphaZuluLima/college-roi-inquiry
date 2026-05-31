@@ -10493,7 +10493,7 @@ const SOURCES = {
   tuition:    { src:"U.S. Dept of Ed College Scorecard",              vintage:"2023–24 award year",            released:"Fall 2024",   cadence:"Annual (fall release)" },
   employment: { src:"College Scorecard outcomes survey",              vintage:"Class of 2022, 6 mo. post-grad", released:"Spring 2024", cadence:"Annual" },
   salary:     { src:"BLS OES + College Scorecard earnings",           vintage:"2022 earnings (4 yr after grad)", released:"2024",       cadence:"Annual" },
-  loanRate:   { src:"Federal Student Aid",                            vintage:"2024–25 award year",            released:"July 2024",   cadence:"Annual (July 1)" },
+  loanRate:   { src:"Federal Student Aid",                            vintage:"2025–26 award year",            released:"July 2025",   cadence:"Annual (July 1)" },
   hsBaseline: { src:"BLS CPS / NCES",                                  vintage:"2024: age 16–24 start; age 25–34 mid (NCES CPS)", released:"2024–25", cadence:"Annual" },
   sp500:      { src:"S&P 500 historical real return",                 vintage:"1928–2024 long-run avg.",       released:"—",           cadence:"Static (~7%/yr)" },
 };
@@ -10504,7 +10504,7 @@ const NEXT_EXPECTED_RELEASE = "2025-09-15";
 const HS_GRAD_SALARY_START = 33000;  // BLS CPS 2024: HS-only workers age 16–24, full-time
 const HS_GRAD_SALARY_MID   = 44000;  // NCES/CPS 2024: HS completers age 25–34 (~yr 10 of work)
 const HS_GRAD_GROWTH       = 0.010;  // BLS ECI long-run real wage growth, production workers
-const FED_LOAN_RATE        = 0.0653;
+const FED_LOAN_RATE        = 0.0639;
 const SP500_REAL_RETURN    = 0.07;
 
 window.ROI_DATA = { SCHOOLS, PROGRAMS, SCHOOL_MULT, SOURCES,

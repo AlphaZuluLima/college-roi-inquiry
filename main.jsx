@@ -26,21 +26,21 @@ function App() {
     aid: 0,
     aidTouched: false,
     loanTerm: 10,
-    loanRate: 0.0653,
+    loanRate: 0.0639,
   });
   const [compareOn, setCompareOn] = mUseState(false);
   const [inputsB, setInputsB] = mUseState({
     schoolId: "university-of-virginia-main-campus", programId: "computer-science",
     residency: "in", years: 4, living: "on-campus", livingExpenses: 0,
     aid: 0, aidTouched: false,
-    loanTerm: 10, loanRate: 0.0653,
+    loanTerm: 10, loanRate: 0.0639,
   });
   const [pathwayInputs, setPathwayInputs] = mUseState(() => {
     return {
       ccId: DEFAULT_CC, univId: DEFAULT_UNIV, programId: "liberal-arts",
       residencyCC: "in",   livingCC: "with-parents", livingExpensesCC:   0, aidCC:   0, aidCCTouched:   false,
       residencyUniv: "in", livingUniv: "on-campus",  livingExpensesUniv: 0, aidUniv: 0, aidUnivTouched: false,
-      loanTerm: 10, loanRate: 0.0653,
+      loanTerm: 10, loanRate: 0.0639,
     };
   });
 

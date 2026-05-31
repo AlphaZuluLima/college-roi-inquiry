@@ -308,7 +308,7 @@ function InputsPanel({ inputs, setInput, customSchools, customPrograms, addCusto
           <Segment value={inputs.loanTerm} onChange={(v) => setInput("loanTerm", v)}
                    options={[[10, "10y"], [15, "15y"], [20, "20y"], [25, "25y"]]} />
         </Field>
-        <Field label={<span>Loan rate <Info source={D.SOURCES.loanRate} detail="2024–25 federal direct subsidized rate is 6.53%. Override below." /></span>}>
+        <Field label={<span>Loan rate <Info source={D.SOURCES.loanRate} detail="2025–26 federal direct subsidized rate is 6.39%. Override below." /></span>}>
           <NumInput
             value={inputs.loanRate === "" ? "" : Math.round(inputs.loanRate * 10000) / 100}
             onChange={(v) => setInput("loanRate", v === "" ? "" : v / 100)}

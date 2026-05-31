@@ -1,5 +1,6 @@
 // calc.js — Financial math for the ROI calculator.
-// All money values in nominal USD, rates as decimal (0.07 = 7%).
+// All money values in constant-dollar (real) terms; salary growth params are real rates.
+// Rates as decimal (0.07 = 7%).
 
 (function () {
   const D = window.ROI_DATA;
@@ -87,12 +88,12 @@
     const totalAid = yearly.aid * yearsCount;
 
     // AOTC: up to $2,500/yr tax credit for first 5 years of post-secondary study (OBBBA).
-    // Bracket 0 (<$30k): $1,000 (only the 40% refundable portion is reliable at low income).
-    // Brackets 1–3 ($30k–$110k): $2,500 (full credit; single phaseout begins at $90k but
-    //   most families in this range file MFJ and qualify fully up to $180k).
-    // Bracket 4 ($110k+): $0 (above single phaseout; MFJ varies but unknown filing status).
+    // Bracket 0 (<$30k): $1,500 (40% refundable cap raised by OBBBA; reliable even at near-zero tax liability).
+    // Brackets 1–3 ($30k–$110k): $2,500 (full credit; OBBBA phaseout $80k–$100k single,
+    //   $160k–$200k MFJ; most families in this range file MFJ and qualify fully).
+    // Bracket 4 ($110k+): $0 (above single phaseout ceiling of $100k; MFJ varies but unknown filing status).
     // Manual (null): $0 (user controls aid directly).
-    const AOTC_BY_BRACKET = [1000, 2500, 2500, 2500, 0];
+    const AOTC_BY_BRACKET = [1500, 2500, 2500, 2500, 0];
     const aotcAnnual = (opts.incomeBracket != null && opts.incomeBracket >= 0)
       ? (AOTC_BY_BRACKET[opts.incomeBracket] ?? 0)
       : 0;
@@ -103,7 +104,7 @@
 
     // Simplified model: treats the full net cost as a single lump loan taken at graduation.
     // In practice, students borrow incrementally and subsidized loans defer interest while in school.
-    const loanRate = Number(opts.loanRate) || 0.0653; // fall back to federal default if field cleared
+    const loanRate = Number(opts.loanRate) || 0.0639; // fall back to 2025–26 federal undergraduate rate
     const loanTerm = Number(opts.loanTerm) || 10;
     const principal = netCost;
     const stdMonthlyPay = monthlyPayment(principal, loanRate, loanTerm);
@@ -113,12 +114,18 @@
     const scorecard = (window.ROI_EARNINGS || {})[school.id]?.[program.id];
     const salStart = scorecard?.sal2yr ? scorecard.sal2yr * scenarioMult : sal.start;
     const salMid = sal.mid;
-    const rawEmpRate = school.employ_6mo * Math.pow(program.employ_field, 0.7) * scenarioMult;
+    // 0.7 exponent compresses field-employment distribution toward 1 (calibrated to reduce
+    // over-penalizing fields with moderate placement rates). scenarioMult is NOT applied here —
+    // it affects salary level, not the structural employment probability of the field/school.
+    const rawEmpRate = school.employ_6mo * Math.pow(program.employ_field, 0.7);
     const empRate = Number.isFinite(rawEmpRate) ? clamp(rawEmpRate, 0, 0.99) : 0;
     const expectedAnnual = (yr) => salaryAtYear(salStart, salMid, opts.salaryGrowth ?? program.growth, yr) * empRate;
 
     // Repayment plan projections (informational — shown alongside result, not used in series).
     // Uses year-1 salary as AGI proxy. RAP rate = min(10%, floor(AGI/$10k)+1%).
+    // NOTE: RAP also specifies a $50/month reduction per dependent (min $10/month), which is
+    // omitted here because household size is unknown. RAP payments are overstated for borrowers
+    // with dependents.
     const ibrNewMonthly  = principal > 0 ? Math.max(0, (salStart - IBR_FPL_150) * 0.10 / 12) : 0;
     const rapRatePct     = Math.min(10, Math.floor(salStart / 10000) + 1);
     const rapMonthly     = principal > 0 ? (salStart * rapRatePct / 100) / 12 : 0;
@@ -159,8 +166,8 @@
     let cumDegreeNet = 0;
     let cumHsNet = 0;
     let cumInvestAlt = 0;
-    let breakEvenYear = null;
-    let beatHsYear = null;
+    let costRecoveryYear = null; // when cumDegreeNet >= 0 (costs recovered, not yet HS crossover)
+    let beatHsYear = null;      // when cumDegreeNet >= cumHsNet (degree outearns HS path)
     let workYear = 0;
 
     for (let y = 0; y < horizon; y++) {
@@ -188,7 +195,7 @@
         cumInvestAlt = cumInvestAlt * (1 + D.SP500_REAL_RETURN);
       }
 
-      if (breakEvenYear === null && y >= yearsCount && cumDegreeNet >= 0) breakEvenYear = y;
+      if (costRecoveryYear === null && y >= yearsCount && cumDegreeNet >= 0) costRecoveryYear = y;
       if (beatHsYear === null && cumDegreeNet >= cumHsNet && y >= yearsCount) beatHsYear = y;
 
       series.push({
@@ -233,7 +240,7 @@
       loanPaidOffAge: principal > 0 ? 18 + yearsCount + activeLoanTerm : null,
       salStart, salMid, empRate, salaryMult: sal.mult,
       series,
-      breakEvenYear, beatHsYear,
+      costRecoveryYear, beatHsYear,
       lifetimeDegree, lifetimeHs, lifetimeInvest, netRoi, lifetimeEarningsGross,
       npv, debtBurden, verdict,
       monthlyIncomeYr1,
@@ -258,7 +265,7 @@
     const ccYearly   = annualCost(cc,   { residency: opts.residencyCC   ?? "in", living: opts.livingCC   ?? "with-parents", aid: opts.aidCC   ?? 0, livingExpenses: opts.livingExpensesCC   ?? 0 });
     const univYearly = annualCost(univ, { residency: opts.residencyUniv ?? "in", living: opts.livingUniv ?? "on-campus",    aid: opts.aidUniv ?? 0, livingExpenses: opts.livingExpensesUniv ?? 0 });
 
-    const loanRate = Number(opts.loanRate) || 0.0653; // fall back to federal default if field cleared
+    const loanRate = Number(opts.loanRate) || 0.0639; // fall back to 2025–26 federal undergraduate rate
     const loanTerm = Number(opts.loanTerm) || 10;
     const ccNetCost   = Math.max(0, ccYearly.net)   * 2;
     const univNetCost = Math.max(0, univYearly.net) * 2;
@@ -296,7 +303,7 @@
 
     const series = [];
     let cumDegreeNet = 0, cumHsNet = 0, cumInvestAlt = 0;
-    let breakEvenYear = null, beatHsYear = null, workYear = 0;
+    let costRecoveryYear = null, beatHsYear = null, workYear = 0;
 
     for (let y = 0; y < HORIZON_YEARS; y++) {
       let degreeIncome = 0, degreeExpense = 0;
@@ -310,14 +317,14 @@
         cumInvestAlt  = cumInvestAlt * (1 + D.SP500_REAL_RETURN) + univYearly.net;
       } else {
         degreeIncome = expectedAnnual(workYear);
-        if (workYear < opts.loanTerm) degreeExpense = monthlyPay * 12;
+        if (workYear < loanTerm) degreeExpense = monthlyPay * 12;
         workYear++;
         cumInvestAlt = cumInvestAlt * (1 + D.SP500_REAL_RETURN);
       }
 
       cumDegreeNet += (degreeIncome - degreeExpense);
       cumHsNet     += hsIncome;
-      if (breakEvenYear === null && y >= 4 && cumDegreeNet >= 0) breakEvenYear = y;
+      if (costRecoveryYear === null && y >= 4 && cumDegreeNet >= 0) costRecoveryYear = y;
       if (beatHsYear    === null && y >= 4 && cumDegreeNet >= cumHsNet) beatHsYear = y;
 
       series.push({
@@ -376,7 +383,7 @@
       loanTerm,
       loanPaidOffAge: principal > 0 ? 18 + yearsCount + loanTerm : null,
       salStart, salMid, empRate, salaryMult: sal.mult,
-      series, breakEvenYear, beatHsYear,
+      series, costRecoveryYear, beatHsYear,
       lifetimeDegree, lifetimeHs, lifetimeInvest, lifetimeEarningsGross, netRoi,
       npv, debtBurden, verdict, monthlyIncomeYr1,
       repayment,
