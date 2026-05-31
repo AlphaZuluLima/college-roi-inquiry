@@ -132,6 +132,41 @@ function Legend({ items }) {
   );
 }
 
+const FOUR_YR_TYPES = new Set(["Public 4-yr", "Private 4-yr", "Liberal Arts"]);
+const TWO_YR_TYPES  = new Set(["Public 2-yr", "Trade"]);
+
+function SchoolProgramMismatchFlag({ result }) {
+  const r = result;
+  if (!r || r.school?._is2plus2) return null;
+  const schoolIs4yr = FOUR_YR_TYPES.has(r.school?.type);
+  const schoolIs2yr = TWO_YR_TYPES.has(r.school?.type);
+  if (schoolIs4yr && r.program?.isTrade) {
+    return (
+      <div className="mismatch-flag">
+        <span className="mf-kicker">Program availability — verify</span>
+        <span className="mf-body">
+          <strong>{r.program.name}</strong> is a trade/vocational credential typically offered at
+          community colleges or trade schools, not 4-year universities. Confirm that{" "}
+          {r.school.short} actually offers this program before planning around these numbers.
+        </span>
+      </div>
+    );
+  }
+  if (schoolIs2yr && !r.program?.isTrade) {
+    return (
+      <div className="mismatch-flag">
+        <span className="mf-kicker">Program availability — verify</span>
+        <span className="mf-body">
+          <strong>{r.program.name}</strong> is typically a 4-year bachelor's program. If you plan
+          to transfer after this school, use the <strong>⇢ 2+2 Transfer Path</strong> tab for a
+          more accurate projection.
+        </span>
+      </div>
+    );
+  }
+  return null;
+}
+
 // Programs that commonly pipeline into graduate or professional school.
 // tier:'pro' = medicine/law/dentistry ($50k/yr, $200k lifetime cap under OBBBA)
 // tier:'grad' = master's/PhD ($20.5k/yr, $100k lifetime cap under OBBBA)
@@ -216,6 +251,7 @@ function ResultsView({ result }) {
   return (
     <div className="results">
       <VerdictCard result={r} />
+      <SchoolProgramMismatchFlag result={r} />
       <HeroRow result={r} />
       <RepaymentPanel result={r} />
       <GradSchoolFlag result={r} />
@@ -258,4 +294,4 @@ function ResultsView({ result }) {
   );
 }
 
-Object.assign(window, { VerdictCard, HeroRow, RepaymentPanel, GradSchoolFlag, Section, Legend, ResultsView });
+Object.assign(window, { VerdictCard, HeroRow, RepaymentPanel, GradSchoolFlag, SchoolProgramMismatchFlag, Section, Legend, ResultsView });

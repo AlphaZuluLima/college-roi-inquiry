@@ -113,7 +113,12 @@
     const sal = projectedSalary(school, program, { scenarioMult });
     const scorecard = (window.ROI_EARNINGS || {})[school.id]?.[program.id];
     const salStart = scorecard?.sal2yr ? scorecard.sal2yr * scenarioMult : sal.start;
-    const salMid = sal.mid;
+    // When Scorecard sal2yr overrides salStart, project salMid from that same starting point
+    // (sal2yr is ~2 yr post-completion; mid-career is ~10 yr post-completion = 8 more years).
+    // This prevents double-counting the school premium that is already embedded in sal2yr.
+    const salMid = scorecard?.sal2yr
+      ? scorecard.sal2yr * scenarioMult * Math.pow(1 + program.growth, 8)
+      : sal.mid;
     // 0.7 exponent compresses field-employment distribution toward 1 (calibrated to reduce
     // over-penalizing fields with moderate placement rates). scenarioMult is NOT applied here —
     // it affects salary level, not the structural employment probability of the field/school.
