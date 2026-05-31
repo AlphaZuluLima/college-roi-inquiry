@@ -132,6 +132,55 @@ function Legend({ items }) {
   );
 }
 
+// Programs that commonly pipeline into graduate or professional school.
+// tier:'pro' = medicine/law/dentistry ($50k/yr, $200k lifetime cap under OBBBA)
+// tier:'grad' = master's/PhD ($20.5k/yr, $100k lifetime cap under OBBBA)
+// funded:true = PhD programs in this field are typically stipend-funded (waiver + $25-37k/yr)
+const GRAD_PATHS = {
+  'pre-med':         { tier:'pro',  label:'medical school (MD/DO)',          typical:'$60–80k/yr tuition', alt:'NHSC scholarship · Military HPSP · PSLF on IBR payments' },
+  'biology':         { tier:'pro',  label:'medical school or a funded PhD',   typical:'$60–80k/yr (MD)',    alt:'NHSC scholarship · Military HPSP · PSLF on IBR payments' },
+  'chemistry':       { tier:'pro',  label:'medical school or a funded PhD',   typical:'$60–80k/yr (MD)',    alt:'NHSC scholarship · Military HPSP · PSLF on IBR payments' },
+  'poli-sci':        { tier:'pro',  label:'law school (JD)',                  typical:'$55–75k/yr tuition', alt:'Law school LRAPs (Harvard/Yale/NYU) · PSLF for public interest law' },
+  'psychology':      { tier:'grad', label:'clinical/research PhD or PsyD',   typical:'$25–50k/yr',  funded:false },
+  'mathematics':     { tier:'grad', label:'PhD or MS programs',               typical:'often funded', funded:true  },
+  'economics':       { tier:'grad', label:'PhD or MBA programs',              typical:'$65–80k/yr (MBA); PhD often funded', funded:false },
+  'computer-science':{ tier:'grad', label:'MS programs',                      typical:'$25–55k/yr',  funded:false },
+  'data-science':    { tier:'grad', label:'MS programs',                      typical:'$25–55k/yr',  funded:false },
+  'engineering-mech':{ tier:'grad', label:'MS or PhD programs',               typical:'often funded', funded:true  },
+  'engineering-elec':{ tier:'grad', label:'MS or PhD programs',               typical:'often funded', funded:true  },
+  'engineering-civil':{ tier:'grad',label:'MS or PhD programs',               typical:'often funded', funded:true  },
+  'public-health':   { tier:'grad', label:'MPH or DrPH programs',             typical:'$25–45k/yr',  funded:false },
+  'social-work':     { tier:'grad', label:'MSW programs',                     typical:'$20–40k/yr',  funded:false },
+  'nursing':         { tier:'grad', label:'MSN or DNP programs',              typical:'$20–35k/yr',  funded:false },
+};
+
+function GradSchoolFlag({ result }) {
+  const r = result;
+  if (!r) return null;
+  const path = GRAD_PATHS[r.program?.id];
+  if (!path) return null;
+  const isPro = path.tier === 'pro';
+  return (
+    <div className={"grad-flag" + (isPro ? " gf-pro" : " gf-grad")}>
+      <div className="gf-kicker">
+        {isPro ? "Professional school pathway · OBBBA July 2026" : "Graduate school pathway · OBBBA July 2026"}
+      </div>
+      <div className="gf-body">
+        <span className="gf-prog">{r.program.name}</span> commonly leads to {path.label} ({path.typical}).{" "}
+        As of July 1, 2026, <strong>Grad PLUS loans are eliminated</strong>. New federal limit:{" "}
+        {isPro
+          ? <strong>$50,000/yr · $200,000 lifetime</strong>
+          : <strong>$20,500/yr · $100,000 lifetime</strong>}.
+        {isPro && " Any gap above the federal cap requires private loans at 10–23% APR."}
+        {!isPro && path.funded && " PhD programs in this field are typically fully funded — tuition waiver plus a $25–37k/yr stipend — making the cap largely irrelevant if you pursue research rather than a coursework-only MS."}
+      </div>
+      {isPro && (
+        <div className="gf-alt">Alternatives: {path.alt}.</div>
+      )}
+    </div>
+  );
+}
+
 function RepaymentPanel({ result }) {
   const r = result;
   if (!r || r.pslf || r.principal <= 0) return null;
@@ -169,6 +218,7 @@ function ResultsView({ result }) {
       <VerdictCard result={r} />
       <HeroRow result={r} />
       <RepaymentPanel result={r} />
+      <GradSchoolFlag result={r} />
 
       <Section
         kicker="Section 01"
@@ -208,4 +258,4 @@ function ResultsView({ result }) {
   );
 }
 
-Object.assign(window, { VerdictCard, HeroRow, RepaymentPanel, Section, Legend, ResultsView });
+Object.assign(window, { VerdictCard, HeroRow, RepaymentPanel, GradSchoolFlag, Section, Legend, ResultsView });
