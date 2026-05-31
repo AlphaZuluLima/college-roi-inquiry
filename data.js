@@ -10495,6 +10495,7 @@ const SCHOOL_MULT = {
 // External assumptions — source metadata for tooltips
 const SOURCES = {
   tuition:    { src:"U.S. Dept of Ed College Scorecard",              vintage:"2023–24 award year",            released:"Fall 2024",   cadence:"Annual (fall release)" },
+  netPrice:   { src:"College Scorecard / IPEDS SFA survey",           vintage:"2022–23 academic year (latest.cost.net_price.*; Title IV recipients only)", released:"Fall 2024", cadence:"Annual (fall release)" },
   employment: { src:"College Scorecard outcomes survey",              vintage:"Class of 2022, 6 mo. post-grad", released:"Spring 2024", cadence:"Annual" },
   salary:     { src:"BLS OES + College Scorecard earnings",           vintage:"Scorecard 6-yr-after-entry mean earnings (~2023); field-of-study sal2yr post-completion", released:"2024", cadence:"Annual" },
   loanRate:   { src:"Federal Student Aid",                            vintage:"2025–26 award year",            released:"July 2025",   cadence:"Annual (July 1)" },

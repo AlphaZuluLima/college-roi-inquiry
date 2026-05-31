@@ -3,21 +3,29 @@ const { useState, useMemo, useEffect, useRef, useId } = React;
 const D = window.ROI_DATA;
 
 // Aid for a given income bracket index (0-4), falling back to avg_aid when no data.
+// net_price is the Scorecard average net price (COA minus grants) for Title IV recipients.
+// Negative values are legitimate — they mean grants exceeded COA (student receives a cash
+// credit above charges). Formula: aid = sticker - net_price, which correctly handles negatives.
+// Downstream annualCost() clamps net cost to max(0, gross - aid), so no further guard needed here.
 window.aidForBracket = function(school, bracketIdx) {
   if (bracketIdx == null) return school.avg_aid;
   const nets = (window.ROI_INCOME || {})[school.id];
   if (!nets) return school.avg_aid;
   const net = nets[bracketIdx];
   if (net == null) {
-    // Bracket 4 = $110k+: Scorecard has no data at this level; default to $0
-    // (families above $110k rarely qualify for need-based aid).
+    // Bracket 4 ($110k+): Scorecard historically had no data at this level.
+    // A field-name bug (110001plus vs 110001-plus) caused all bracket-4 to be null
+    // in the current income.js generation; after re-running the script the null check
+    // here still correctly falls through to school.avg_aid for schools with no data.
+    // Families above $110k rarely qualify for need-based aid, so $0 is a reasonable
+    // conservative default specifically for bracket 4.
     return bracketIdx === 4 ? 0 : school.avg_aid;
   }
   const sticker =
     Number(school.tuition_in  || 0) +
     Number(school.room_board  || 0) +
     Number(school.books       || 0);
-  return Math.max(0, sticker - Math.max(0, net));
+  return sticker - net;
 };
 
 const INCOME_BRACKETS = [

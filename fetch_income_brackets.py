@@ -3,10 +3,19 @@
 fetch_income_brackets.py — Fetch net price by income bracket from College Scorecard.
 
 Outputs income.js: window.ROI_INCOME = { schoolSlug: [net0,net1,net2,net3,net4], ... }
-Each value is the net price (what the student pays) for that bracket, or null.
+Each value is the Scorecard average net price (COA minus grants) for Title IV aid recipients
+in that income bracket, or null if suppressed (n < 30 students). Negative values are
+legitimate — they mean grants exceeded COA (student receives a cash credit above charges).
 Brackets: $0-30k, $30-48k, $48-75k, $75-110k, $110k+
 
-calc/UI derives: aid = max(0, sticker - net)
+calc/UI derives: aid = sticker - net  (app.jsx aidForBracket; negative net → aid > sticker)
+
+Known slug-collision limitations (no impact on flagship schools in data.js):
+  • Penn State branch campuses ("Pennsylvania State University-Penn State X") all produce
+    the same 40-char slug; only the first-encountered campus survives in income.js.
+  • Same-name schools in different states (e.g., Lincoln University in MO and PA) are
+    disambiguated by first-seen-wins (state order in ALL_STATES); PA may lose to MO.
+  • Fix: switch key scheme to Scorecard numeric id + lookup table. Out of scope for now.
 
 Usage:
   python fetch_income_brackets.py --key YOUR_API_KEY [--states AL,...] [--out income.js]
@@ -27,9 +36,13 @@ ALL_STATES = [
     "IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH",
     "NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT",
     "VT","VA","WA","WV","WI","WY",
+    "PR",  # Puerto Rico — 60+ Scorecard institutions; omitted in original script
 ]
 
-BRACKETS = ["0-30000", "30001-48000", "48001-75000", "75001-110000", "110001plus"]
+# NOTE: the top bracket label is "110001-plus" (with a hyphen), not "110001plus".
+# The original script had a typo here that silently returned null for every school
+# in the $110k+ bracket. Confirmed correct label via Scorecard data dictionary.
+BRACKETS = ["0-30000", "30001-48000", "48001-75000", "75001-110000", "110001-plus"]
 
 FIELDS = ",".join([
     "id",
