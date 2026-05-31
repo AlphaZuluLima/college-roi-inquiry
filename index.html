@@ -261,6 +261,32 @@ i{font-style:italic}
 .rp-sub{font:400 11px/1 var(--mono);color:var(--ink-2)}
 .rp-foot{font:400 10px/1.4 var(--mono);color:var(--ink-3);border-top:1px solid var(--rule);padding-top:12px}
 
+/* ─── Expandable chart ───────────────────────────────────────────────── */
+.chart-expand-wrap{position:relative;cursor:zoom-in}
+.chart-expand-hint{position:absolute;bottom:6px;right:6px;font-size:14px;color:var(--ink-3);
+  opacity:0;transition:opacity .15s;pointer-events:none;line-height:1}
+.chart-expand-wrap:hover .chart-expand-hint{opacity:1}
+
+.chart-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:center;z-index:9000;
+  animation:fadeIn .15s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.chart-modal{position:relative;background:var(--paper);
+  width:min(1200px,calc(100vw - 40px));max-height:calc(100vh - 80px);
+  display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.35);
+  animation:slideUp .18s ease}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+.chart-modal-label{font:600 10px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-2);padding:14px 18px 0;flex:0 0 auto}
+.chart-modal-close{position:absolute;top:10px;right:12px;background:transparent;border:0;
+  font:400 18px/1 var(--mono);color:var(--ink-2);cursor:pointer;padding:4px 8px;
+  transition:color .1s}
+.chart-modal-close:hover{color:var(--ink)}
+.chart-modal-body{padding:16px 18px 18px;overflow:auto;flex:1 1 auto}
+.chart-modal-body .chart-svg{width:100%;height:auto;display:block}
+
 /* ─── School/program mismatch flag ──────────────────────────────────── */
 .mismatch-flag{display:flex;flex-direction:column;gap:8px;padding:12px 16px;
   border:1px solid #B58A2A;border-left:3px solid #B58A2A;background:color-mix(in srgb,#B58A2A 5%,transparent)}

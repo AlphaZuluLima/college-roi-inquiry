@@ -3,6 +3,39 @@ if (!window.ROI_CALC) throw new Error("ROI_CALC must load before results.jsx");
 if (!window.ROI_DATA) throw new Error("ROI_DATA must load before results.jsx");
 const { fmt$, fmt$Full, fmtPct } = window.ROI_CALC;
 const D = window.ROI_DATA;
+const { useState, useEffect, useCallback } = React;
+
+// Wraps a chart so that clicking it opens a full-screen modal.
+// The SVG uses viewBox (no explicit width/height attrs) so CSS scaling to 100% works perfectly.
+function ExpandableChart({ children, label }) {
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = e => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [open, close]);
+  return (
+    <>
+      <div className="chart-expand-wrap" onClick={() => setOpen(true)} title="Click to expand">
+        {children}
+        <span className="chart-expand-hint" aria-hidden="true">⤢</span>
+      </div>
+      {open && ReactDOM.createPortal(
+        <div className="chart-modal-backdrop" onClick={close}>
+          <div className="chart-modal" onClick={e => e.stopPropagation()}>
+            {label && <div className="chart-modal-label">{label}</div>}
+            <button className="chart-modal-close" onClick={close} aria-label="Close">✕</button>
+            <div className="chart-modal-body">{children}</div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
 
 function VerdictCard({ result }) {
   const r = result;
@@ -261,7 +294,9 @@ function ResultsView({ result }) {
         title="Earnings vs. debt over a lifetime"
         dek={`Cumulative net cash position by age, comparing the ${r.program.name} path at ${r.school.short} against finishing high school and either working or investing the cost of college in the S&P 500.`}
       >
-        <EarningsChart result={r} width={760} height={380} />
+        <ExpandableChart label="Earnings vs. debt over a lifetime">
+          <EarningsChart result={r} width={760} height={380} />
+        </ExpandableChart>
         <Legend items={[
           { label: "Degree path (this calc)", color: "var(--accent)" },
           { label: "HS-only worker", color: "var(--hs)" },
@@ -277,7 +312,9 @@ function ResultsView({ result }) {
         <div className="cost-row">
           <CostStack result={r} width={760} height={120} />
         </div>
-        <Sankey result={r} width={760} height={300} />
+        <ExpandableChart label="Where the money goes">
+          <Sankey result={r} width={760} height={300} />
+        </ExpandableChart>
       </Section>
 
       <Section
@@ -285,7 +322,9 @@ function ResultsView({ result }) {
         title="Compared to the alternatives"
         dek="Lifetime cumulative cash by age 68 across three paths. The 'invest the cost' path assumes someone with a HS diploma works while putting equivalent dollars into the S&P 500 at long-run real returns."
       >
-        <CompareBars result={r} width={680} height={220} />
+        <ExpandableChart label="Compared to the alternatives">
+          <CompareBars result={r} width={680} height={220} />
+        </ExpandableChart>
         <p className="footnote">
           Baselines: <Info source={D.SOURCES.hsBaseline} label="HS earnings" detail="Median weekly earnings × 52, BLS Current Population Survey" /> · S&P 500 long-run real return ~7%.
         </p>
